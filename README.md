@@ -17,11 +17,14 @@ This repository now contains two parallel Aurora Demo targets:
 
 ## Origins & Credits
 
-| Layer                          | Author                       | Source                                                                                     |
-|:-------------------------------|:-----------------------------|:-------------------------------------------------------------------------------------------|
-| Aurora effects engine (origin) | Jason Coon / PixelMatix      | [github.com/pixelmatix/aurora](https://github.com/pixelmatix/aurora)                      |
-| ESP32 HUB75 DMA port           | mrfaptastic / mrcodetastic   | [ESP32-HUB75-MatrixPanel-DMA](https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA) |
-| ESP32 CYD (ILI9341) port       | Anthony Clarke               | [AuroraDemo_CYD](https://github.com/anthonyjclarke/AuroraDemo_CYD)                        |
+| Layer                          | Author                       | Source                                                            |
+|:-------------------------------|:-----------------------------|:------------------------------------------------------------------|
+| Aurora effects engine (origin) | Jason Coon / PixelMatix      | [github.com/pixelmatix/aurora]                                    |
+|                                                               | (https://github.com/pixelmatix/aurora)                            |
+| ESP32 HUB75 DMA port           | mrfaptastic / mrcodetastic   | [ESP32-HUB75-MatrixPanel-DMA]                                     |
+|                                                               | (https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA)     |
+| ESP32 CYD (ILI9341) port       | Anthony Clarke               | [AuroraDemo_CYD]                                                  |
+|                                                               |  (https://github.com/anthonyjclarke/AuroraDemo_CYD)               |
 
 The Aurora effects engine was originally written in 2014 for the Teensy + SmartMatrix. mrfaptastic ported it to ESP32 with HUB75 DMA LED panels. This project re-targets that work to the much cheaper and more accessible CYD hardware using TFT_eSPI.
 
@@ -34,7 +37,7 @@ The CYD is an ESP32 development board with an integrated 2.8″ ILI9341 TFT (320
 | Spec      | Value                     |
 |:----------|:--------------------------|
 | MCU       | ESP32 dual-core 240 MHz   |
-| Display   | ILI9341 2.8″ 320×240 SPI |
+| Display   | ILI9341 2.8″ 320×240 SPI  |
 | Touch     | XPT2046 resistive         |
 | Flash     | 4 MB                      |
 | RAM       | 320 KB SRAM + ~4 MB PSRAM |

@@ -1,20 +1,14 @@
-# Aurora Demo — Claude Code Context
+# Aurora Demo — Codex Context
 
 Repository: <https://github.com/anthonyjclarke/AuroraDemo_CYD>
 
 ## Project Overview
 
-Dual-target visual effects demo — 29 procedurally-animated Aurora patterns running on two independent runtimes:
-
-| Target          | Runtime                    | Canvas                             | Patterns |
-|:----------------|:---------------------------|:-----------------------------------|:---------|
-| CYD (firmware)  | ESP32 + TFT_eSPI + FastLED | 160×120 → 2× scaled to 320×240 TFT | 29       |
-| Browser (web/)  | Vanilla JS + HTML5 Canvas  | 64×64 px                           | 27       |
-
-The two implementations are independent — the browser app is **not** compiled from the C++ source.
+ESP32-based visual effects demo running 29 procedurally-animated patterns on the **Cheap Yellow Display (CYD)** — an ESP32 dev board with an integrated 2.8" ILI9341 320×240 TFT and XPT2046 resistive touch screen.
 
 - **Version**: 0.5.0 (`VERSION_STRING` in `src/main.cpp`)
-- **CYD patterns**: 29, rotate every 20 s (or on touch)
+- **Active patterns**: 29, rotate every 20 s (or on touch)
+- **Virtual canvas**: 160×120 px, scaled 2×2 → 320×240 on the TFT
 - **Origins**: Jason Coon / PixelMatix Aurora (2014) → mrfaptastic ESP32-HUB75 port → Anthony Clarke CYD port (2024)
 
 ---
@@ -40,10 +34,10 @@ Touch calibration (landscape, rotation 1): `{ 339, 3470, 237, 3580, 7 }` — rep
 
 ## Libraries
 
-| Library                | Version   | Purpose                        |
-|:-----------------------|:----------|:-------------------------------|
-| `bodmer/TFT_eSPI`      | `^2.5.43` | ILI9341 display driver + touch |
-| `fastled/FastLED`      | `^3.4.0`  | Color maths, palettes, noise   |
+| Library                | Version   | Purpose                              |
+|:-----------------------|:----------|:-------------------------------------|
+| `bodmer/TFT_eSPI`      | `^2.5.43` | ILI9341 display driver + touch       |
+| `fastled/FastLED`      | `^3.4.0`  | Color maths, palettes, noise         |
 
 TFT_eSPI is configured entirely via `build_flags` — no `User_Setup.h` file needed.
 
@@ -68,16 +62,9 @@ lib/
     Attractor.h         Gravitational attractor for boid physics
     Geometry.h          3D structs: Vertex, Point, EdgePoint, squareFace, triFace
     PatternXxx.h        One file per pattern (29 active)
-
-web/
-  index.html            Shell — canvas, controls, status bar
-  app.js                All pattern logic, Matrix class, PaletteSet, render loop (~1200 lines)
-  styles.css            Layout and theming
-  README.md             Browser-edition notes
 ```
 
-All C++ pattern files are **header-only** (inline implementations, no `.cpp` files).
-The browser app is a single-file vanilla JS implementation — no build step, no dependencies.
+All pattern files are **header-only** (inline implementations, no `.cpp` files).
 
 ---
 
@@ -113,37 +100,37 @@ NUM_LEDS        = 19201                           // (160 × 120) + 1
 
 ## Active Patterns (29)
 
-| # | Class                       | Display Name       | Algorithm                                   |
-|:--|:----------------------------|:-------------------|:--------------------------------------------|
-|  1 | PatternSpiro               | Spiro              | Spirograph parametric equations             |
-|  2 | PatternLife                | Life               | Conway's Game of Life                       |
-|  3 | PatternFlowField           | FlowField          | Boids following Perlin noise vector field   |
-|  4 | PatternPendulumWave        | PendulumWave       | `beatsin8`-driven pendulum wave             |
-|  5 | PatternIncrementalDrift    | IncrementalDrift   | Nested oscillating circles                  |
-|  6 | PatternIncrementalDrift2   | IncrementalDrift2  | Oscillating circles variant                 |
-|  7 | PatternMunch               | Munch              | Bitwise XOR/AND coordinate patterns         |
-|  8 | PatternElectricMandala     | ElectricMandala    | Perlin noise + 4-fold caleidoscope symmetry |
-|  9 | PatternSpin                | Spin               | Accelerating/decelerating circular particle |
-| 10 | PatternSimplexNoise        | SimplexNoise       | Direct Perlin noise → colour mapping        |
-| 11 | PatternWave                | Wave               | Travelling waves, 4 rotation modes          |
-| 12 | PatternAttract             | Attract            | Boids orbiting gravity attractor            |
-| 13 | PatternSwirl               | Swirl              | `DimAll` blur + sine wave modulation        |
-| 14 | PatternBounce              | Bounce             | Gravity-bouncing particle system            |
-| 15 | PatternFlock               | Flock              | Craig Reynolds boid flocking                |
-| 16 | PatternInfinity            | Infinity           | Lissajous figure-8 curves                   |
-| 17 | PatternPlasma              | Plasma             | Sine wave interference                      |
-| 18 | PatternInvadersSmall       | Invaders Small     | Space Invader sprites, 1×1 px cells         |
-| 19 | PatternInvadersMedium      | Invaders Medium    | Space Invader sprites, tiled 4×4 px cells   |
-| 20 | PatternInvadersLarge       | Invaders Large     | Space Invader sprites, tiled large cells    |
-| 21 | PatternSnake               | Snake              | Snake-game animation                        |
-| 22 | PatternCube                | Cube               | 3D wireframe cube (perspective projection)  |
-| 23 | PatternFire                | Fire               | Fire simulation via fractional noise scroll |
-| 24 | PatternMaze                | Maze               | Growing-tree procedural maze                |
-| 25 | PatternPulse               | Pulse              | Expanding circle pulses with noise smearing |
-| 26 | PatternSpark               | Spark              | Spark/firework particles + noise smearing   |
-| 27 | PatternSpiral              | Spiral             | Rotating spiral geometry                    |
-| 28 | PatternRadar               | Radar              | Radar sweep animation                       |
-| 29 | PatternMultipleStream      | MultipleStream     | Noise-smeared multi-stream pixel movement   |
+| # | Class                       | Display Name       | Algorithm                                         |
+|:--|:----------------------------|:-------------------|:--------------------------------------------------|
+|  1 | PatternSpiro               | Spiro              | Spirograph parametric equations                   |
+|  2 | PatternLife                | Life               | Conway's Game of Life                             |
+|  3 | PatternFlowField           | FlowField          | Boids following Perlin noise vector field         |
+|  4 | PatternPendulumWave        | PendulumWave       | `beatsin8`-driven pendulum wave                   |
+|  5 | PatternIncrementalDrift    | IncrementalDrift   | Nested oscillating circles                        |
+|  6 | PatternIncrementalDrift2   | IncrementalDrift2  | Oscillating circles variant                       |
+|  7 | PatternMunch               | Munch              | Bitwise XOR/AND coordinate patterns               |
+|  8 | PatternElectricMandala     | ElectricMandala    | Perlin noise + 4-fold caleidoscope symmetry       |
+|  9 | PatternSpin                | Spin               | Accelerating/decelerating circular particle       |
+| 10 | PatternSimplexNoise        | SimplexNoise       | Direct Perlin noise → colour mapping              |
+| 11 | PatternWave                | Wave               | Travelling waves, 4 rotation modes               |
+| 12 | PatternAttract             | Attract            | Boids orbiting gravity attractor                  |
+| 13 | PatternSwirl               | Swirl              | `DimAll` blur + sine wave modulation              |
+| 14 | PatternBounce              | Bounce             | Gravity-bouncing particle system                  |
+| 15 | PatternFlock               | Flock              | Craig Reynolds boid flocking                      |
+| 16 | PatternInfinity            | Infinity           | Lissajous figure-8 curves                        |
+| 17 | PatternPlasma              | Plasma             | Sine wave interference                            |
+| 18 | PatternInvadersSmall       | Invaders Small     | Space Invader sprites, 1×1 px cells               |
+| 19 | PatternInvadersMedium      | Invaders Medium    | Space Invader sprites, tiled 4×4 px cells         |
+| 20 | PatternInvadersLarge       | Invaders Large     | Space Invader sprites, tiled large cells          |
+| 21 | PatternSnake               | Snake              | Snake-game animation                              |
+| 22 | PatternCube                | Cube               | 3D wireframe cube (perspective projection)        |
+| 23 | PatternFire                | Fire               | Fire simulation via fractional noise scroll       |
+| 24 | PatternMaze                | Maze               | Growing-tree procedural maze                      |
+| 25 | PatternPulse               | Pulse              | Expanding circle pulses with noise smearing       |
+| 26 | PatternSpark               | Spark              | Spark/firework particles + noise smearing         |
+| 27 | PatternSpiral              | Spiral             | Rotating spiral geometry                          |
+| 28 | PatternRadar               | Radar              | Radar sweep animation                             |
+| 29 | PatternMultipleStream      | MultipleStream     | Noise-smeared multi-stream pixel movement         |
 
 ---
 
@@ -279,47 +266,6 @@ patterns.start()
 ```
 
 FPS is reported **once per transition** (average over the full pattern duration) — not every second.
-
----
-
-## Browser Demo (`web/`)
-
-A standalone browser port of the animation set — runs entirely client-side with no build toolchain.
-
-### Running
-
-```sh
-# Option A — open directly
-open web/index.html
-
-# Option B — local server (if browser blocks file:// scripts)
-cd web && python3 -m http.server   # then visit http://localhost:8000
-```
-
-### Architecture
-
-- **Grid**: 64×64 px `<canvas>` (upscaled by CSS to fill the hero panel)
-- **Matrix class**: Float32Array pixel buffer; `setPixel`, `addPixel` (additive blend), `fade`
-- **PaletteSet**: 6 named palettes (Solar, Ocean, Forest, Lava, Ice, Neon); `sample(t)` returns interpolated RGB
-- **Render loop**: `requestAnimationFrame`-based; patterns return nothing — loop drives timing via `DEFAULT_AUTO_ROTATE_MS = 20000`
-- **Controls**: pattern select, palette select, duration input, autoplay toggle, Prev / Next / Shuffle buttons
-
-### Patterns in Browser Edition (27)
-
-Spiro, Radar, Life, Flow Field, Pendulum Wave, Incremental Drift, Incremental Drift 2, Spin, Munch, Electric Mandala, Fire, Pulse, Simplex Noise, Wave, Attract, Bounce, Swirl, Flock, Infinity, Plasma, Spark, Invaders, Cube, MultipleStream, Snake, Maze, Spiral
-
-> Invaders Medium and Invaders Large are not present — the browser edition has a single "Invaders" pattern.
-
-### Key Differences from CYD Firmware
-
-| Aspect          | CYD firmware              | Browser app                     |
-|:----------------|:--------------------------|:--------------------------------|
-| Canvas size     | 160×120 → 320×240 TFT    | 64×64 `<canvas>`                 |
-| Colour model    | FastLED `CRGB` / palettes | HSV → RGB, 6 custom palettes    |
-| Noise           | FastLED `inoise8`         | Perlin-style JS implementation  |
-| Frame push      | `tft.pushImage()`         | `ctx.putImageData()`            |
-| Touch / input   | XPT2046 resistive touch   | Browser UI controls             |
-| Pattern count   | 29                        | 27                              |
 
 ---
 

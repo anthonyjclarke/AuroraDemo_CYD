@@ -1099,6 +1099,7 @@ class AuroraApp {
     this.fpsElement = document.getElementById("fps");
 
     this.setupControls();
+    this.setupFullscreen();
     this.syncStatus();
     window.requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
@@ -1144,6 +1145,59 @@ class AuroraApp {
       const next = randInt(0, this.patterns.length);
       this.palettes.setIndex(randInt(0, this.palettes.palettes.length));
       this.selectPattern(next);
+    });
+  }
+
+  setupFullscreen() {
+    const IDLE_MS = 3000;
+    let idleTimer = null;
+
+    const setIdle = () => this.canvas.classList.add("fs-idle");
+
+    const resetIdle = () => {
+      this.canvas.classList.remove("fs-idle");
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(setIdle, IDLE_MS);
+    };
+
+    const onEnterFullscreen = () => {
+      resetIdle();
+      document.addEventListener("mousemove", resetIdle);
+      document.addEventListener("keydown", resetIdle);
+    };
+
+    const onExitFullscreen = () => {
+      this.canvas.classList.remove("fs-idle");
+      clearTimeout(idleTimer);
+      document.removeEventListener("mousemove", resetIdle);
+      document.removeEventListener("keydown", resetIdle);
+    };
+
+    this.canvas.addEventListener("click", () => {
+      if (document.fullscreenElement === this.canvas) {
+        this.stepPattern(1);
+      } else {
+        this.canvas.requestFullscreen().catch(() => {});
+      }
+    });
+
+    this.canvas.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        if (document.fullscreenElement === this.canvas) {
+          this.stepPattern(1);
+        } else {
+          this.canvas.requestFullscreen().catch(() => {});
+        }
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      if (document.fullscreenElement === this.canvas) {
+        onEnterFullscreen();
+      } else {
+        onExitFullscreen();
+      }
     });
   }
 

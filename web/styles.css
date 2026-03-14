@@ -132,6 +132,27 @@ h1 {
     radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 40%),
     #05090f;
   image-rendering: pixelated;
+  cursor: pointer;
+}
+
+/* Fullscreen / screensaver */
+#matrix:fullscreen,
+#matrix:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+  background: #000;
+  cursor: default;
+}
+
+#matrix:fullscreen::backdrop {
+  background: #000;
+}
+
+#matrix.fs-idle:fullscreen,
+#matrix.fs-idle:-webkit-full-screen {
+  cursor: none;
 }
 
 .controls {
