@@ -44,6 +44,8 @@ public:
   // these pixels are smeared by a large radius, giving a lot of movement
   // the image is dimmed before each drawing to not saturate the screen with color
   // the smear has an offset so the pixels usually have a trail leading toward the upper left
+  // The CYD port seeds those points across the full 160x120 canvas and must
+  // call ShowFrame() each pass or the TFT never presents the updated buffer.
   unsigned int drawFrame() {
     static unsigned long counter = 0;
 #if 0

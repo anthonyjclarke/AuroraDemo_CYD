@@ -244,6 +244,8 @@ All macros accept `printf`-style format strings and append `\n` automatically.
 
 ```
 patterns.stop()
+effects.ClearFrame()
+effects.ShowFrame()          // flush black frame so old pattern does not bleed through
 patterns.moveRandom(1)         // Fisher-Yates shuffled advance
 showPatternName(name)          // black screen + bitmap text overlay, 1.0 s
 tft.fillScreen(TFT_BLACK)      // clear before animation starts
@@ -261,7 +263,6 @@ patterns.start()
 [INFO] [start] Plasma
 [INFO] [done] Plasma              avg fps: 28
 [INFO] [next] Cube
-[INFO] [touch] tap at (142, 98) -> next pattern
 ```
 
 FPS is reported **once per transition** (average over the full pattern duration) — not every second.
@@ -275,4 +276,6 @@ FPS is reported **once per transition** (average over the full pattern duration)
 - **All pattern headers** use `#ifndef PatternFoo_H` / `#define PatternFoo_H` guards.
 - **`noise_x`, `noise_y`, `noise_z`, `noise_scale_x`, `noise_scale_y`, `noisesmoothing`** are file-scope globals in `Effects.h` — accessed directly (without `effects.`) by noise-smearing patterns.
 - **`tft` global** declared in `main.cpp` before `#include "Effects.h"` — this ordering is mandatory.
-- **Pattern scaling**: InvadersMedium uses 4×4 px cells on a 7×5 grid; PatternCube uses `focal=90`, `cubeWidth=90`, `zCamera` range 280–380 (must exceed `cubeWidth × √3 ≈ 156`).
+- **Pattern scaling**: Invaders Small, Medium, and Large all tile dynamically across the 160×120 canvas; PatternCube uses `focal=90`, `cubeWidth=90`, and a sinusoidal `zCamera` range of 280–380 (must exceed `cubeWidth × √3 ≈ 156`).
+- **PatternMultipleStream** now seeds motion across the full canvas and explicitly calls `effects.ShowFrame()` each pass.
+- **PatternSpin** uses bounded arc sampling rather than an unbounded coordinate-matching loop, which prevents the old runtime hang.

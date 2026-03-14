@@ -148,6 +148,8 @@ Tap anywhere on the screen to advance to the next effect immediately — the sam
 
 Touch calibration constants are defined in `src/main.cpp`. The default values suit most CYD units in landscape orientation; if tap accuracy is important, run a calibration sketch and replace the five values.
 
+Each transition clears both the TFT and the Aurora framebuffer before the next pattern starts. The effect name is then shown briefly using a small built-in bitmap renderer rather than the TFT library font APIs, which proved unreliable on this target.
+
 ---
 
 ## Configuration

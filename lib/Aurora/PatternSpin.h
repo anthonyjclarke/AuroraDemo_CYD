@@ -47,34 +47,24 @@ public:
     }
 
     unsigned int drawFrame() {
-        effects.DimAll(190); effects.ShowFrame();
+        effects.DimAll(190);
 
         CRGB color = effects.ColorFromCurrentPalette(speed * 8);
 
-        // start position
-        int x;
-        int y;
-
-        // target position
-        float targetDegrees = degrees + speed;
-        float targetRadians = radians(targetDegrees);
-        int targetX = (int) (MATRIX_CENTER_X + radius * cos(targetRadians));
-        int targetY = (int) (MATRIX_CENTER_Y - radius * sin(targetRadians));
-
-        float tempDegrees = degrees;
-
-        do{
-            float rads = radians(tempDegrees);
-            x = (int) (MATRIX_CENTER_X + radius * cos(rads));
-            y = (int) (MATRIX_CENTER_Y - radius * sin(rads));
+        // Draw along the swept arc with a bounded number of samples. The older
+        // coordinate-matching loop could become non-terminating once floating
+        // angles were rounded to integer pixels.
+        int steps = max(1, (int)ceilf(speed));
+        for (int i = 0; i <= steps; i++) {
+            float t = (float)i / (float)steps;
+            float sampleDegrees = degrees + (speed * t);
+            float rads = radians(sampleDegrees);
+            int x = (int)(MATRIX_CENTER_X + radius * cos(rads));
+            int y = (int)(MATRIX_CENTER_Y - radius * sin(rads));
 
             effects.drawBackgroundFastLEDPixelCRGB(x, y, color);
             effects.drawBackgroundFastLEDPixelCRGB(y, x, color);
-
-            tempDegrees += 1;
-            if (tempDegrees >= 360)
-                tempDegrees = 0;
-        } while (x != targetX || y != targetY);
+        }
 
         degrees += speed;
 
@@ -91,6 +81,8 @@ public:
                 velocity *= -1;
             }
         }
+
+        effects.ShowFrame();
 
         return 0;
     }

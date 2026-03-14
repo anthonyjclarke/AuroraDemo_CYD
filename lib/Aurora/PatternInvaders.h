@@ -27,6 +27,8 @@
 
 class PatternInvadersTiled : public Drawable {
   protected:
+    // Draw the 5x5 mirrored invader repeatedly across the full virtual canvas
+    // instead of the old fixed small-screen placement.
     const uint8_t blockSize;
     const uint8_t blockGap;
     const uint8_t tileGap;

@@ -14,8 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Changed
 - **Pattern name overlay** now uses a custom bitmap renderer on the TFT instead of TFT_eSPI text APIs
 - **Touch handling** now advances patterns on raw-pressure edge detection with lower latency
+- **Pattern transitions** now clear the TFT and Aurora framebuffer before the next animation starts, avoiding residual pixels between effects
 - **PatternInvaders** variants now tile across the full 160×120 canvas instead of older small-canvas limits
 - **PatternMultipleStream** now calls `ShowFrame()` and seeds motion across the full canvas
+- **PatternCube** now uses a full-range sinusoid for `zCamera` after the old `beatsin8()` overflow broke projection
+- **PatternSpin** now uses bounded arc sampling and no longer hangs after a few seconds
+- Long overlay labels now split across two lines, including camel-case names such as `ElectricMandala`
 
 ---
 
@@ -43,12 +47,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Added
 - **Touch support** — tap anywhere on the CYD screen to advance to the next pattern immediately
   - XPT2046 resistive touch controller enabled via `TOUCH_CS=33` build flag
-  - Leading-edge detection + 800 ms debounce prevents accidental repeat triggers
-  - Tap coordinates logged at INFO level
+  - Leading-edge raw-pressure detection with a 250 ms debounce prevents accidental repeat triggers
   - Calibration constants provided for CYD landscape orientation (user-replaceable)
 - **Pattern name overlay** — at each pattern transition (including startup):
   - Screen clears to black
-  - Effect name rendered centred in cyan at text size 2 for 1.5 s
+  - Effect name rendered via a custom bitmap font for 1.0 s
   - Screen cleared again before animation begins
 - **`lib/debug.h`** — levelled debug logging system (reusable across projects):
   - Levels: 0=Off, 1=Error, 2=Warn, 3=Info, 4=Verbose
@@ -139,7 +142,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## To Do
 
 ### Patterns & Visuals
-- [ ] Review remaining small-canvas hardcoding in other patterns (PatternInvadersSmall, PatternInvadersLarge) — scale to fill 160×120
 - [ ] PatternLife: cells may be too small at 1×1 px — scale to 2×2 or 3×3 blocks
 - [ ] PatternMaze: walls at 1 px — consider 2 px lines for visibility
 - [ ] PatternSnake: scale snake thickness to match canvas size
@@ -153,7 +155,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Code Quality
 - [ ] Move `VERSION_STRING` into its own `lib/version.h` so patterns/effects can reference it
 - [ ] Add `PatternSpiral` and `PatternInfinity` size review for 160×120
-- [ ] `PatternNoiseSmearing` (`PatternMultipleStream`) draws on a 32×32 sub-area — update coordinates to spread across the full 160×120 canvas
 - [ ] Replace blocking `delay()` in `showPatternName()` with a non-blocking state machine so touch remains responsive during the name overlay
 
 ### Infrastructure

@@ -76,7 +76,6 @@ static const uint16_t      TOUCH_Z_THRESHOLD  = 350;
 static const uint16_t      TOUCH_RELEASE_Z    = 120;
 static unsigned long       last_touch_ms     = 0;
 static bool                prev_touched      = false;
-static unsigned long       last_touch_diag_ms = 0;
 
 static bool isTouchPressedRaw() {
   uint16_t rawZ = tft.getTouchRawZ();
@@ -99,15 +98,6 @@ void checkTouch() {
   bool pressed = rawZ > TOUCH_Z_THRESHOLD;
   bool released = rawZ < TOUCH_RELEASE_Z;
 
-  // Emit a low-rate diagnostic only when the panel is showing pressure or a touch
-  // is detected, so idle rendering does not flood Serial.
-  if ((rawZ > 0 || touched) && (millis() - last_touch_diag_ms >= 250)) {
-    last_touch_diag_ms = millis();
-    DBG_INFO("[touch] rawZ=%u press=%u release=%u pressed=%d touched=%d prev=%d transition=%d",
-             rawZ, TOUCH_Z_THRESHOLD, TOUCH_RELEASE_Z,
-             pressed, touched, prev_touched, in_pattern_transition);
-  }
-
   // Act on the leading edge of a physical press. Some CYD panels report valid
   // pressure but fail TFT_eSPI's stricter coordinate validation, so pressure
   // edge is the reliable trigger for "next pattern".
@@ -115,11 +105,7 @@ void checkTouch() {
     unsigned long now = millis();
     if (now - last_touch_ms >= TOUCH_DEBOUNCE_MS) {
       last_touch_ms = now;
-      if (touched) {
-        DBG_INFO("[touch] tap at (%d, %d) -> next pattern", tx, ty);
-      } else {
-        DBG_INFO("[touch] pressure-only tap (rawZ=%u) -> next pattern", rawZ);
-      }
+      if (touched) DBG_VERBOSE("[touch] tap at (%d, %d)", tx, ty);
       nextPattern();
     }
   }
@@ -244,7 +230,7 @@ static int findOverlaySplit(const String& label, int max_chars_per_line) {
 }
 
 void showPatternName(const char* name) {
-  DBG_INFO("[overlay] showPatternName start: '%s'", name);
+  effects.ClearFrame();
   tft.fillScreen(TFT_BLACK);
   int16_t cx = tft.width() / 2;
   int16_t cy = tft.height() / 2;
@@ -271,23 +257,15 @@ void showPatternName(const char* name) {
   if (line1_x < 4) line1_x = 4;
   if (line2_x < 4) line2_x = 4;
 
-  DBG_INFO("[overlay] screen=%dx%d center=(%d,%d) line1='%s' x=%d y=%d line2='%s' x=%d y=%d",
-           tft.width(), tft.height(), cx, cy,
-           line1.c_str(), line1_x, line1_y,
-           line2.c_str(), line2_x, line2_y);
-
   drawBitmapTextLine(line1, line1_x, line1_y, TFT_CYAN, scale);
   if (line2.length()) {
     drawBitmapTextLine(line2, line2_x, line2_y, TFT_CYAN, scale);
   }
 
-  DBG_INFO("[overlay] bitmap overlay drawn, entering temporary delay");
-
   // Temporary blocking delay for visibility while debugging the overlay.
   delay(NAME_HOLD_MS);
-  DBG_INFO("[overlay] delay complete, clearing screen");
+  effects.ClearFrame();
   tft.fillScreen(TFT_BLACK);
-  DBG_INFO("[overlay] showPatternName end");
 }
 
 /* ─── Pattern transition ────────────────────────────────────────────────────
@@ -306,11 +284,14 @@ void nextPattern() {
   }
 
   patterns.stop();
+  effects.ClearFrame();
+  effects.ShowFrame();
   patterns.moveRandom(1);
 
   DBG_INFO("[next] %s", patterns.getCurrentPatternName());
   showPatternName(patterns.getCurrentPatternName());
 
+  effects.ClearFrame();
   patterns.start();
   ms_pattern_start = millis();
   last_frame        = millis();
@@ -322,8 +303,6 @@ void nextPattern() {
 void setup() {
   Serial.begin(115200);
   delay(250);
-  Serial.println();
-  Serial.println("[BOOT] Touch debug enabled");
 
   tft.begin();
   tft.setRotation(1);          // landscape: 320 wide × 240 tall
@@ -335,8 +314,6 @@ void setup() {
   DBG_INFO("=== Aurora Demo v" VERSION_STRING " — CYD Edition ===");
   DBG_INFO("Debug level: %d", debugLevel);
   DBG_INFO("Touch: CS=%d Z-threshold=%u", TOUCH_CS, TOUCH_Z_THRESHOLD);
-  DBG_INFO("Touch calibration: {%u, %u, %u, %u, %u}",
-           touchCal[0], touchCal[1], touchCal[2], touchCal[3], touchCal[4]);
 
   effects.Setup();
   DBG_INFO("Heap after effects.Setup(): %lu bytes free", ESP.getFreeHeap());

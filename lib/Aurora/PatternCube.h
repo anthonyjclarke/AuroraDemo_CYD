@@ -166,7 +166,9 @@ class PatternCube : public Drawable {
       // DimAll() gives the same lossy-fade effect and works unconditionally.
       effects.DimAll(blurAmount);
 
-      zCamera = beatsin8(2, 280, 380);  // scaled; must stay > cubeWidth*√3 ≈ 156
+      // beatsin8() truncates to 8-bit, so values above 255 wrap and break the
+      // perspective projection. Use a full integer sinusoid for camera depth.
+      zCamera = 330 + (sin(millis() * 0.002f) * 50.0f);  // 280..380
       AngxSpeed = beatsin8(3, 1, 10) / 100.0f;
       AngySpeed = beatcos8(5, 1, 10) / 100.0f;
 
