@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aurora Demo</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Browser Edition</p>
+          <h1>Aurora Demo</h1>
+          <p class="lede">
+            A browser-native version of the original animation set, rebuilt for a
+            canvas matrix instead of an ESP32 HUB75 display.
+          </p>
+          <div class="hero-status">
+            <div>
+              <span class="label">Current</span>
+              <strong id="current-pattern">Spiro</strong>
+            </div>
+            <div>
+              <span class="label">Palette</span>
+              <strong id="current-palette">Solar</strong>
+            </div>
+            <div>
+              <span class="label">FPS</span>
+              <strong id="fps">0</strong>
+            </div>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <canvas id="matrix" width="64" height="64" aria-label="Aurora animation preview"></canvas>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Animation controls">
+        <label class="field">
+          <span>Animation</span>
+          <select id="pattern-select"></select>
+        </label>
+
+        <label class="field">
+          <span>Palette</span>
+          <select id="palette-select"></select>
+        </label>
+
+        <label class="field">
+          <span>Duration</span>
+          <input id="duration-input" type="number" min="1" step="1" value="20">
+        </label>
+
+        <label class="field toggle">
+          <span>Autoplay</span>
+          <input id="autoplay-toggle" type="checkbox" checked>
+        </label>
+
+        <div class="actions">
+          <button id="prev-button" type="button">Previous</button>
+          <button id="next-button" type="button">Next</button>
+          <button id="shuffle-button" type="button">Shuffle</button>
+        </div>
+      </section>
+    </main>
+
+    <script defer src="app.js"></script>
+  </body>
+</html>

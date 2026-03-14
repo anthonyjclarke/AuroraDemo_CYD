@@ -8,6 +8,11 @@ Twenty-nine effects rotate automatically every 20 seconds. Tap the screen at any
 
 Repository: [github.com/anthonyjclarke/AuroraDemo_CYD](https://github.com/anthonyjclarke/AuroraDemo_CYD)
 
+This repository now contains two parallel Aurora Demo targets:
+
+- the **ESP32 CYD firmware** in the existing PlatformIO project
+- a **browser-native static web app** in [`web/`](/Users/anthonyjclarke/PlatformIO/Projects/AuroraDemo_CYD/web)
+
 ---
 
 ## Origins & Credits
@@ -65,6 +70,30 @@ At each pattern transition it logs the average fps for the outgoing effect and t
 
 ---
 
+## Browser Demo
+
+The repo also includes a browser-native implementation of Aurora Demo under
+[`web/`](/Users/anthonyjclarke/PlatformIO/Projects/AuroraDemo_CYD/web). It is a
+separate static app that mirrors the animation set for desktop/mobile browsers;
+it is not served by the ESP32 and does not change the firmware runtime.
+
+### Run
+
+Open [`web/index.html`](/Users/anthonyjclarke/PlatformIO/Projects/AuroraDemo_CYD/web/index.html)
+directly in a browser, or serve the `web/` folder with any static web server:
+
+```bash
+cd web
+python3 -m http.server
+```
+
+Then visit `http://localhost:8000`.
+
+The browser app includes animation selection, palette selection, previous/next
+controls, shuffle, autoplay, duration control, and a live FPS/status panel.
+
+---
+
 ## Project Structure
 
 ```text
@@ -83,6 +112,11 @@ AuroraDemo_CYD/
 │       ├── Attractor.h       Gravitational attractor for boid physics
 │       ├── Geometry.h        3D geometry structs used by PatternCube
 │       └── Pattern*.h        Individual pattern implementations (one file each)
+├── web/
+│   ├── index.html            Browser demo entry point
+│   ├── app.js                Canvas renderer and animation implementations
+│   ├── styles.css            Browser demo styling
+│   └── README.md             Browser demo notes and run instructions
 ├── platformio.ini
 ├── CHANGELOG.md
 └── README.md
