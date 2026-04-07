@@ -8,6 +8,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [0.5.1] — 2026-04-08
+
 ### Added
 - GitHub repository published at `anthonyjclarke/AuroraDemo_CYD`
 

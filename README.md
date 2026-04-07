@@ -4,7 +4,7 @@ Procedurally animated visual effects running on the **ESP32 Cheap Yellow Display
 
 Twenty-nine effects rotate automatically every 20 seconds. Tap the screen at any time to skip to the next effect immediately.
 
-**Current version: 0.5.0** — see [CHANGELOG.md](CHANGELOG.md) for full history.
+**Current version: 0.5.1** — see [CHANGELOG.md](CHANGELOG.md) for full history.
 
 Repository: [github.com/anthonyjclarke/AuroraDemo_CYD](https://github.com/anthonyjclarke/AuroraDemo_CYD)
 

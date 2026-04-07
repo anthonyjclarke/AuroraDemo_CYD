@@ -6,7 +6,7 @@ Repository: <https://github.com/anthonyjclarke/AuroraDemo_CYD>
 
 ESP32-based visual effects demo running 29 procedurally-animated patterns on the **Cheap Yellow Display (CYD)** — an ESP32 dev board with an integrated 2.8" ILI9341 320×240 TFT and XPT2046 resistive touch screen.
 
-- **Version**: 0.5.0 (`VERSION_STRING` in `src/main.cpp`)
+- **Version**: 0.5.1 (`VERSION_STRING` in `src/main.cpp`)
 - **Active patterns**: 29, rotate every 20 s (or on touch)
 - **Virtual canvas**: 160×120 px, scaled 2×2 → 320×240 on the TFT
 - **Origins**: Jason Coon / PixelMatix Aurora (2014) → mrfaptastic ESP32-HUB75 port → Anthony Clarke CYD port (2024)
@@ -257,7 +257,7 @@ patterns.start()
 ## Serial Output (115200 baud)
 
 ```
-=== Aurora Demo v0.5.0 — CYD Edition ===
+=== Aurora Demo v0.5.1 — CYD Edition ===
 [INFO] Heap after effects.Setup(): 241532 bytes free
 [INFO] Patterns loaded: { "count": 29, "results": [ … ] }
 [INFO] [start] Plasma
