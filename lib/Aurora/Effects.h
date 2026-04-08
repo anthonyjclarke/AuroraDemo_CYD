@@ -131,8 +131,8 @@ public:
 
   void ShowFrame() {
     currentPalette = targetPalette;
-    // Each Aurora pixel is rendered as a 2×2 block on the 320×240 CYD display.
-    // 160×120 canvas × 2 = 320×240. Build one scanline at a time and push twice.
+    // Each Aurora pixel is rendered as a 2×2 block to fill the TFT.
+    // Build one scaled scanline at a time and push it twice (once per TFT row).
     static uint16_t rowbuf[MATRIX_WIDTH * 2];
     tft.startWrite();
     for (int y = 0; y < MATRIX_HEIGHT; y++) {

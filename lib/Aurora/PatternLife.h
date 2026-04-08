@@ -38,7 +38,9 @@ public:
 
 class PatternLife : public Drawable {
 private:
-    Cell world[MATRIX_WIDTH][MATRIX_HEIGHT];
+    // Heap-allocated to avoid BSS overflow on larger canvas sizes (e.g. 240×160).
+    // Allocated in start(), freed in stop().
+    Cell (*world)[MATRIX_HEIGHT] = nullptr;
     unsigned int density = 50;
     int generation = 0;
 
@@ -73,6 +75,16 @@ private:
 public:
     PatternLife() {
         name = (char *)"Life";
+    }
+
+    void start() override {
+        world = new Cell[MATRIX_WIDTH][MATRIX_HEIGHT]();
+        generation = 0;
+    }
+
+    void stop() override {
+        delete[] world;
+        world = nullptr;
     }
 
     unsigned int drawFrame() {

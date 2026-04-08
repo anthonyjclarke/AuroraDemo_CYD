@@ -27,7 +27,9 @@
 
 class PatternMaze : public Drawable {
 private:
-    enum Directions {
+    // uint8_t underlying type keeps grid[] at 1 byte/cell instead of 4,
+    // preventing BSS overflow on larger canvas sizes (e.g. 240×160).
+    enum Directions : uint8_t {
         None = 0,
         Up = 1,
         Down = 2,

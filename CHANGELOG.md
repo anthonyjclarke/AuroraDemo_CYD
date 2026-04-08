@@ -10,6 +10,29 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.0] — 2026-04-09
+
+### Added
+- **CYD 3.5" board variant** (ST7796, 480×320) as a second PlatformIO environment
+  (`env:esp32-cyd-35`, `-DBOARD_CYD_35=1`)
+- Virtual canvas 240×160 at 2× scale fills the full 480×320 display — same
+  rendering path as the 2.8" board, no `ShowFrame()` changes required
+- Per-board touch calibration via `#if defined(BOARD_CYD_35)` in `main.cpp`;
+  CYD 3.5" values are placeholders — recalibrate with a TFT_eSPI calibration sketch
+- Board-identified boot message names the active board and driver on serial output
+
+### Changed
+- PlatformIO env renamed from `esp32-cyd` to `esp32-cyd-28`; shared settings
+  factored into a `[common]` section in `platformio.ini`
+- `-DBOARD_CYD_28=1` build flag added to the 2.8" env for symmetric identification
+- `PatternLife::world` heap-allocated in `start()`/`stop()` to prevent BSS overflow
+  at larger canvas sizes (was a `Cell[MATRIX_WIDTH][MATRIX_HEIGHT]` class member)
+- `PatternMaze::Directions` enum given `uint8_t` underlying type; reduces `grid[]`
+  from 4 bytes/cell to 1 byte/cell, preventing BSS overflow at 240×160
+- Version bumped to 0.6.0
+
+---
+
 ## [0.5.1] — 2026-04-08
 
 ### Added

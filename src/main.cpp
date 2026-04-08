@@ -2,7 +2,11 @@
  * Aurora Demo — ESP32 CYD Edition
  *
  * Procedurally animated visual effects running on the ESP32 Cheap Yellow Display
- * (CYD) with a 2.8" ILI9341 320×240 TFT.  Effects rotate every 20 seconds.
+ * (CYD) family.  Effects rotate every 20 seconds.
+ *
+ * Board variants — select via PlatformIO env:
+ *   env:esp32-cyd-28  CYD 2.8"  ILI9341  320×240  (-DBOARD_CYD_28=1)
+ *   env:esp32-cyd-35  CYD 3.5"  ST7796   480×320  (-DBOARD_CYD_35=1)
  *
  * Origins:
  *   Aurora effects engine  — Jason Coon / PixelMatix (2014)
@@ -15,9 +19,12 @@
  * Rendering pipeline:
  *   effects.ClearFrame()  →  pattern.drawFrame()  →  effects.ShowFrame()
  *
- * Canvas: 160×120 px virtual, scaled 2×2 → 320×240 on the ILI9341.
+ * Canvas: MATRIX_WIDTH × MATRIX_HEIGHT virtual, scaled 2×2 to fill the TFT.
+ *   CYD 2.8" (ILI9341): 160×120 → 320×240
+ *   CYD 3.5" (ST7796):  240×160 → 480×320
  * leds[], heat[], and noise[][] are heap-allocated in Effects::Setup() so
- * the large buffers (~96 KB total) don't overflow the linker's BSS segment.
+ * the large buffers don't overflow the linker's BSS segment.
+ *   CYD 2.8": ~96 KB total    CYD 3.5": ~192 KB total
  *
  * Hardware — CYD pin mapping (configured via TFT_eSPI build flags):
  *   MISO=12  MOSI=13  SCLK=14  CS=15  DC=2  RST=N/A  Backlight=21  TouchCS=33
@@ -28,9 +35,9 @@
 
 /* ─── Version ─────────────────────────────────────────────────────────────── */
 #define VERSION_MAJOR  0
-#define VERSION_MINOR  5
-#define VERSION_PATCH  1
-#define VERSION_STRING "0.5.1"
+#define VERSION_MINOR  6
+#define VERSION_PATCH  0
+#define VERSION_STRING "0.6.0"
 
 #include <Arduino.h>
 #include <FastLED.h>
@@ -48,10 +55,16 @@ Effects effects;
 Patterns patterns;
 
 /* ─── Touch calibration ─────────────────────────────────────────────────────
- *  Typical values for the CYD in landscape (rotation 1).  If taps feel
- *  consistently off, run a calibration sketch and replace these five values.
- *  For pattern-advance purposes any reasonable calibration works fine.        */
+ *  Values are board-specific.  Run the TFT_eSPI touch calibration example and
+ *  replace the five values for each board with your unit-specific readings.
+ *  For pattern-advance purposes any reasonable calibration works fine.
+ *
+ *  CYD 3.5" values are PLACEHOLDERS — recalibrate on the physical unit.      */
+#if defined(BOARD_CYD_35)
+static uint16_t touchCal[5] = { 300, 3600, 200, 3700, 7 };  // PLACEHOLDER — recalibrate
+#else  // BOARD_CYD_28 (default)
 static uint16_t touchCal[5] = { 339, 3470, 237, 3580, 7 };
+#endif
 
 /* ─── Timing ─────────────────────────────────────────────────────────────── */
 const unsigned long PATTERN_DURATION_MS = 20000;  // 20 s per effect
@@ -305,13 +318,17 @@ void setup() {
   delay(250);
 
   tft.begin();
-  tft.setRotation(1);          // landscape: 320 wide × 240 tall
+  tft.setRotation(1);          // landscape — 320×240 (CYD 2.8") or 480×320 (CYD 3.5")
   tft.setTouch(touchCal);      // load touch calibration
   tft.fillScreen(TFT_BLACK);
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);  // backlight on
 
-  DBG_INFO("=== Aurora Demo v" VERSION_STRING " — CYD Edition ===");
+#if defined(BOARD_CYD_35)
+  DBG_INFO("=== Aurora Demo v" VERSION_STRING " — CYD 3.5\" (ST7796 480x320) ===");
+#else
+  DBG_INFO("=== Aurora Demo v" VERSION_STRING " — CYD 2.8\" (ILI9341 320x240) ===");
+#endif
   DBG_INFO("Debug level: %d", debugLevel);
   DBG_INFO("Touch: CS=%d Z-threshold=%u", TOUCH_CS, TOUCH_Z_THRESHOLD);
 

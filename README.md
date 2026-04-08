@@ -1,10 +1,18 @@
 # Aurora Demo — ESP32 CYD Edition
 
+<!-- Update version badge when VERSION_STRING changes in src/main.cpp -->
+![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-ESP32-green.svg)
+![PlatformIO](https://img.shields.io/badge/PlatformIO-6.x-orange.svg)
+![Board](https://img.shields.io/badge/CYD-2.8%22%20%7C%204.0%22-yellow.svg)
+![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
+![Status](https://img.shields.io/badge/status-stable-green.svg)
+
 Procedurally animated visual effects running on the **ESP32 Cheap Yellow Display** (CYD) — a low-cost ESP32 development board with a built-in 2.8″ ILI9341 320×240 TFT and resistive touch screen.
 
 Twenty-nine effects rotate automatically every 20 seconds. Tap the screen at any time to skip to the next effect immediately.
 
-**Current version: 0.5.1** — see [CHANGELOG.md](CHANGELOG.md) for full history.
+**Current version: 0.6.0** — see [CHANGELOG.md](CHANGELOG.md) for full history.
 
 Repository: [github.com/anthonyjclarke/AuroraDemo_CYD](https://github.com/anthonyjclarke/AuroraDemo_CYD)
 
@@ -17,14 +25,11 @@ This repository now contains two parallel Aurora Demo targets:
 
 ## Origins & Credits
 
-| Layer                          | Author                       | Source                                                            |
-|:-------------------------------|:-----------------------------|:------------------------------------------------------------------|
-| Aurora effects engine (origin) | Jason Coon / PixelMatix      | [github.com/pixelmatix/aurora]                                    |
-|                                                               | (https://github.com/pixelmatix/aurora)                            |
-| ESP32 HUB75 DMA port           | mrfaptastic / mrcodetastic   | [ESP32-HUB75-MatrixPanel-DMA]                                     |
-|                                                               | (https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA)     |
-| ESP32 CYD (ILI9341) port       | Anthony Clarke               | [AuroraDemo_CYD]                                                  |
-|                                                               |  (https://github.com/anthonyjclarke/AuroraDemo_CYD)               |
+| Layer                          | Author                     | Source                                                                                    |
+|:-------------------------------|:---------------------------|:------------------------------------------------------------------------------------------|
+| Aurora effects engine (origin) | Jason Coon / PixelMatix    | [pixelmatix/aurora](https://github.com/pixelmatix/aurora)                                |
+| ESP32 HUB75 DMA port           | mrfaptastic / mrcodetastic | [ESP32-HUB75-MatrixPanel-DMA](https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA) |
+| ESP32 CYD (ILI9341) port       | Anthony Clarke             | [anthonyjclarke/AuroraDemo_CYD](https://github.com/anthonyjclarke/AuroraDemo_CYD)        |
 
 The Aurora effects engine was originally written in 2014 for the Teensy + SmartMatrix. mrfaptastic ported it to ESP32 with HUB75 DMA LED panels. This project re-targets that work to the much cheaper and more accessible CYD hardware using TFT_eSPI.
 
