@@ -6,10 +6,10 @@ Repository: <https://github.com/anthonyjclarke/AuroraDemo_CYD>
 
 ESP32-based visual effects demo running 29 procedurally-animated patterns on the **Cheap Yellow Display (CYD)** family. Two board variants are supported, each with its own PlatformIO environment:
 
-| Env               | Board     | Driver  | Display   | Canvas  | Scale |
-|:------------------|:----------|:--------|:----------|:--------|:------|
-| `esp32-cyd-28`    | CYD 2.8"  | ILI9341 | 320×240   | 160×120 | 2×    |
-| `esp32-cyd-35`    | CYD 3.5"  | ST7796  | 480×320   | 240×160 | 2×    |
+| Env               | Board ID           | Driver  | Display | Canvas  | Scale | Heap buffers |
+|:------------------|:-------------------|:--------|:--------|:--------|:------|:-------------|
+| `esp32-cyd-28`    | ESP32-2432S028R    | ILI9341 | 320×240 | 160×120 | 2×    | ~96 KB       |
+| `esp32-cyd-40`    | ESP32-32E          | ST7796S | 480×320 | 120×80  | 4×    | ~48 KB       |
 
 - **Version**: 0.6.0 (`VERSION_STRING` in `src/main.cpp`)
 - **Active patterns**: 29, rotate every 20 s (or on touch)
@@ -23,25 +23,32 @@ The repository contains **two parallel targets**:
 
 ## Hardware
 
-- **MCU**: ESP32 (`esp32dev` board in PlatformIO)
-- **Display**: ILI9341 (CYD 2.8") or ST7796 (CYD 3.5"), driven by `TFT_eSPI`
-- **Touch**: XPT2046 resistive controller, shares SPI bus
-- **GPIO pins are identical on both board variants**
+- **MCU**: ESP32 (`esp32dev` board in PlatformIO) — both boards
+- **Display**: ILI9341 (CYD 2.8") or ST7796S (CYD 4.0"), driven by `TFT_eSPI`
+- **Touch**: XPT2046 resistive controller, shares SPI bus on both boards
 
 ### Pin Mapping
 
-| Signal     | GPIO | Signal        | GPIO    |
-|:-----------|:-----|:--------------|:--------|
-| TFT MOSI   | 13   | TFT SCLK      | 14      |
-| TFT CS     | 15   | TFT DC        | 2       |
-| TFT RST    | —    | Backlight     | 21      |
-| TFT MISO   | 12   | Touch CS      | 33      |
-| SPI main   | 55 MHz | SPI touch   | 2.5 MHz |
+Most pins are identical across both boards. The backlight GPIO and SPI frequency differ.
 
-Touch calibration (landscape, rotation 1) is set per board via `#if defined(BOARD_CYD_35)` in `main.cpp`. CYD 3.5" values are placeholders — run the TFT_eSPI calibration example on the physical unit and replace them.
+| Signal     | GPIO | Note                              |
+|:-----------|:-----|:----------------------------------|
+| TFT MOSI   | 13   | Both boards                       |
+| TFT SCLK   | 14   | Both boards                       |
+| TFT CS     | 15   | Both boards                       |
+| TFT DC     | 2    | Both boards                       |
+| TFT MISO   | 12   | Both boards                       |
+| TFT RST    | —    | Not connected on either board     |
+| Touch CS   | 33   | Both boards                       |
+| Backlight  | 21   | CYD 2.8" only (`BOARD_CYD_28`)    |
+| Backlight  | 27   | CYD 4.0" only (`BOARD_CYD_40`)    |
+| SPI freq   | 55 MHz | CYD 2.8" (`-DSPI_FREQUENCY`)   |
+| SPI freq   | 27 MHz | CYD 4.0" (`-DSPI_FREQUENCY`)   |
+
+Touch calibration (landscape, rotation 1) is set per board via `#if defined(BOARD_CYD_40)` in `main.cpp`. The 4.0" values are placeholders — run the TFT_eSPI calibration example on the physical unit and replace them.
 
 - CYD 2.8": `{ 339, 3470, 237, 3580, 7 }`
-- CYD 3.5": `{ 300, 3600, 200, 3700, 7 }` (PLACEHOLDER — recalibrate)
+- CYD 4.0": `{ 300, 3600, 200, 3700, 7 }` (PLACEHOLDER — recalibrate)
 
 ---
 
@@ -92,29 +99,34 @@ All pattern files are **header-only** (inline implementations, no `.cpp` files).
 ```
 effects.ClearFrame()          zero leds[] (memset)
   └─ pattern.drawFrame()      write CRGB values to effects.leds[XY(x, y)]
-       └─ effects.ShowFrame() build RGB565 scanlines → tft.pushImage() × 2 per row
+       └─ effects.ShowFrame() build RGB565 scanlines → tft.pushImage() × DISPLAY_SCALE per row
 ```
 
-`ShowFrame()` scales each 160×1 Aurora scanline to two 320×1 TFT rows.
+`ShowFrame()` scales each virtual scanline to `DISPLAY_SCALE` physical TFT rows using the `DISPLAY_SCALE` build flag (2 on the 2.8" board, 4 on the 4.0" board). The code path is identical; only the multiplier differs.
+
 `XY(x, y)` returns `(y * MATRIX_WIDTH) + x + 1` — offset by 1 so index 0 safely absorbs out-of-bounds writes (never displayed).
 
-### Key Constants
+### Key Constants (per-board — set via platformio.ini build flags)
 
-```cpp
-MATRIX_WIDTH    = 160    MATRIX_HEIGHT    = 120
-MATRIX_CENTER_X = 80     MATRIX_CENTER_Y  = 60
-MATRIX_CENTRE_X = 79     MATRIX_CENTRE_Y  = 59   // byte (off-by-one variants)
-NUM_LEDS        = 19201                           // (160 × 120) + 1
-```
+| Constant          | CYD 2.8"  | CYD 4.0"  |
+|:------------------|:----------|:----------|
+| `MATRIX_WIDTH`    | 160       | 120       |
+| `MATRIX_HEIGHT`   | 120       | 80        |
+| `MATRIX_CENTER_X` | 80        | 60        |
+| `MATRIX_CENTER_Y` | 60        | 40        |
+| `MATRIX_CENTRE_X` | 79        | 59        |
+| `MATRIX_CENTRE_Y` | 59        | 39        |
+| `DISPLAY_SCALE`   | 2         | 4         |
+| `NUM_LEDS`        | 19201     | 9601      |
 
 ### Heap-Allocated Buffers (initialised in `Effects::Setup()`)
 
-| Buffer                  | CYD 2.8" (160×120) | CYD 3.5" (240×160) | Why heap, not BSS               |
-|:------------------------|:-------------------|:-------------------|:--------------------------------|
-| `CRGB *leds`            | ~57.6 KB           | ~115 KB            | Prevents `dram0_0_seg` overflow |
-| `byte *heat`            | ~18.8 KB           | ~38.4 KB           | Same reason                     |
-| `uint8_t (*noise)[H]`   | ~18.8 KB           | ~38.4 KB           | Same reason                     |
-| **Total**               | **~95 KB**         | **~192 KB**        | ESP32 SRAM: 320 KB              |
+| Buffer                  | CYD 2.8" (160×120) | CYD 4.0" (120×80) | Why heap, not BSS               |
+|:------------------------|:-------------------|:------------------|:--------------------------------|
+| `CRGB *leds`            | ~57.6 KB           | ~28.8 KB          | Prevents `dram0_0_seg` overflow |
+| `byte *heat`            | ~18.8 KB           | ~9.6 KB           | Same reason                     |
+| `uint8_t (*noise)[H]`   | ~18.8 KB           | ~9.6 KB           | Same reason                     |
+| **Total**               | **~95 KB**         | **~48 KB**        | Free heap before: ~327 KB       |
 
 ---
 
@@ -261,8 +273,10 @@ All macros accept `printf`-style format strings and append `\n` automatically.
 - Release detected via hysteresis: `rawZ < TOUCH_RELEASE_Z` (120) resets `prev_touched`
 - 250 ms debounce (`TOUCH_DEBOUNCE_MS`) prevents rapid re-firing
 - `in_pattern_transition` flag blocks touch during transitions
-- Touch CS GPIO 33 enabled via `-DTOUCH_CS=33` build flag
-- Calibration: `static uint16_t touchCal[5] = { 339, 3470, 237, 3580, 7 }` in `main.cpp`
+- Touch CS GPIO 33 enabled via `-DTOUCH_CS=33` build flag (both boards)
+- Calibration is board-conditional in `main.cpp`:
+  - `BOARD_CYD_28`: `{ 339, 3470, 237, 3580, 7 }`
+  - `BOARD_CYD_40`: `{ 300, 3600, 200, 3700, 7 }` — PLACEHOLDER, recalibrate with TFT_eSPI calibration sketch
 
 ---
 
@@ -285,9 +299,16 @@ patterns.start()                   // second start() call on the new pattern (re
 
 ## Serial Output (115200 baud)
 
+Boot message is board-identified. Examples:
+
 ```
 [INFO] === Aurora Demo v0.6.0 — CYD 2.8" (ILI9341 320x240) ===
-[INFO] Heap after effects.Setup(): 241532 bytes free
+[INFO] === Aurora Demo v0.6.0 — CYD 4.0" (ST7796S 480x320) ===
+```
+
+```
+[INFO] Heap before effects.Setup(): 327100 bytes free, PSRAM: 0 bytes free
+[INFO] Heap after effects.Setup(): 241532 bytes free, PSRAM: 0 bytes free
 [INFO] Patterns loaded:
 {
   "count": 29,
@@ -325,13 +346,13 @@ The JS pattern implementations are loosely analogous to the C++ originals but ar
 ## Key Implementation Notes
 
 - **`PatternTest`** is declared in `Patterns.h` and `PatternTest.h` is included, but `patternTest` is **not** in `items[]` — it never appears in the rotation.
-- **`PatternLife::world`** is heap-allocated (`new Cell[MATRIX_WIDTH][MATRIX_HEIGHT]`) in `start()` / freed in `stop()` to avoid BSS overflow at larger canvas sizes. Other patterns with canvas-sized arrays should follow the same pattern.
-- **`PatternMaze::Directions`** uses `enum Directions : uint8_t` so the `grid[width][height]` member stays at 1 byte/cell instead of 4, preventing BSS overflow at 240×160.
+- **`PatternLife::world`** is heap-allocated (`new Cell[MATRIX_WIDTH][MATRIX_HEIGHT]`) in `start()` / freed in `stop()` to avoid BSS overflow. Any pattern with a canvas-sized array must do the same.
+- **`PatternMaze::Directions`** uses `enum Directions : uint8_t` so the `grid[width][height]` member stays at 1 byte/cell instead of 4, preventing BSS overflow.
 - **No HUB75 code** — entirely removed. No `matrix` object, no `#ifdef CYD_DISPLAY` guards.
 - **`blur2d()` not used** — the FastLED v3.4+ flat-pointer overload asserts without an `XYMap`. PatternSwirl and PatternCube use `effects.DimAll()` instead (same visual result).
 - **All pattern headers** use `#ifndef PatternFoo_H` / `#define PatternFoo_H` guards.
 - **`noise_x`, `noise_y`, `noise_z`, `noise_scale_x`, `noise_scale_y`, `noisesmoothing`** are file-scope globals in `Effects.h` — accessed directly (without `effects.`) by noise-smearing patterns.
 - **`tft` global** declared in `main.cpp` before `#include "Effects.h"` — this ordering is mandatory.
-- **Pattern scaling**: Invaders Small, Medium, and Large all tile dynamically across the 160×120 canvas; PatternCube uses `focal=90`, `cubeWidth=90`, and a sinusoidal `zCamera` range of 280–380 (must exceed `cubeWidth × √3 ≈ 156`).
+- **Pattern scaling**: Invaders Small, Medium, and Large tile dynamically across `MATRIX_WIDTH × MATRIX_HEIGHT`. PatternCube uses `focal=90`, `cubeWidth=90`, and a sinusoidal `zCamera` range of 280–380 (must exceed `cubeWidth × √3 ≈ 156`).
 - **PatternMultipleStream** now seeds motion across the full canvas and explicitly calls `effects.ShowFrame()` each pass.
 - **PatternSpin** uses bounded arc sampling rather than an unbounded coordinate-matching loop, which prevents the old runtime hang.

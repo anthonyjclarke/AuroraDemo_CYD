@@ -78,12 +78,20 @@ public:
     }
 
     void start() override {
-        world = new Cell[MATRIX_WIDTH][MATRIX_HEIGHT]();
+        if (ESP.getFreePsram() > 0) {
+            world = (Cell(*)[MATRIX_HEIGHT]) ps_calloc(MATRIX_WIDTH * MATRIX_HEIGHT, sizeof(Cell));
+        } else {
+            world = new Cell[MATRIX_WIDTH][MATRIX_HEIGHT]();
+        }
         generation = 0;
     }
 
     void stop() override {
-        delete[] world;
+        if (ESP.getFreePsram() > 0) {
+            free(world);
+        } else {
+            delete[] world;
+        }
         world = nullptr;
     }
 

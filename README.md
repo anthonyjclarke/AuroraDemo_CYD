@@ -8,7 +8,7 @@
 ![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
 ![Status](https://img.shields.io/badge/status-stable-green.svg)
 
-Procedurally animated visual effects running on the **ESP32 Cheap Yellow Display** (CYD) — a low-cost ESP32 development board with a built-in 2.8″ ILI9341 320×240 TFT and resistive touch screen.
+Procedurally animated visual effects running on the **ESP32 Cheap Yellow Display** (CYD) family. Two board variants are supported: the 2.8″ ILI9341 (320×240) and the 4.0″ ST7796S (480×320). Each has its own PlatformIO build environment; all 29 patterns run identically on both.
 
 Twenty-nine effects rotate automatically every 20 seconds. Tap the screen at any time to skip to the next effect immediately.
 
@@ -19,7 +19,7 @@ Repository: [github.com/anthonyjclarke/AuroraDemo_CYD](https://github.com/anthon
 This repository now contains two parallel Aurora Demo targets:
 
 - the **ESP32 CYD firmware** in the existing PlatformIO project
-- a **browser-native static web app** in [`web/`](/Users/anthonyjclarke/PlatformIO/Projects/AuroraDemo_CYD/web)
+- a **browser-native static web app** in [`web/`](web/)
 
 ---
 
@@ -37,24 +37,30 @@ The Aurora effects engine was originally written in 2014 for the Teensy + SmartM
 
 ## Hardware
 
-The CYD is an ESP32 development board with an integrated 2.8″ ILI9341 TFT (320×240, SPI) and XPT2046 resistive touch controller, available for ~£5–10. No external wiring is required — all connections are on-board.
+Both CYD variants are ESP32 development boards with an integrated TFT and XPT2046 resistive touch controller, available for ~£5–15. No external wiring is required.
 
-| Spec      | Value                     |
-|:----------|:--------------------------|
-| MCU       | ESP32 dual-core 240 MHz   |
-| Display   | ILI9341 2.8″ 320×240 SPI  |
-| Touch     | XPT2046 resistive         |
-| Flash     | 4 MB                      |
-| RAM       | 320 KB SRAM + ~4 MB PSRAM |
+| Spec         | CYD 2.8″ (`esp32-cyd-28`)  | CYD 4.0″ (`esp32-cyd-40`)  |
+|:-------------|:---------------------------|:---------------------------|
+| MCU          | ESP32 (ESP32-2432S028R)    | ESP32 (ESP32-32E)          |
+| Display      | ILI9341 · 320×240 · SPI    | ST7796S · 480×320 · SPI    |
+| Touch        | XPT2046 resistive          | XPT2046 resistive          |
+| Flash        | 4 MB                       | 4 MB                       |
+| RAM          | 320 KB SRAM (no PSRAM)     | 520 KB SRAM (no PSRAM)     |
+| Canvas       | 160×120 @ 2× scale         | 120×80 @ 4× scale          |
+| SPI freq     | 55 MHz                     | 27 MHz                     |
+| Backlight    | GPIO 21                    | GPIO 27                    |
+| Colour order | BGR                        | BGR                        |
 
 ### Pin Mapping
 
-| Signal     | GPIO | Signal       | GPIO |
-|:-----------|:-----|:-------------|:-----|
-| TFT MOSI   | 13   | TFT SCLK     | 14   |
-| TFT CS     | 15   | TFT DC       | 2    |
-| TFT RST    | —    | Backlight    | 21   |
-| Touch CS   | 33   |              |      |
+Most SPI pins are shared across both boards. The backlight GPIO differs.
+
+| Signal     | GPIO | Signal       | GPIO (2.8″) | GPIO (4.0″) |
+|:-----------|:-----|:-------------|:------------|:------------|
+| TFT MOSI   | 13   | Backlight    | 21          | 27          |
+| TFT SCLK   | 14   | TFT DC       | 2           | 2           |
+| TFT CS     | 15   | TFT RST      | —           | —           |
+| TFT MISO   | 12   | Touch CS     | 33          | 33          |
 
 ---
 
@@ -67,27 +73,39 @@ The CYD is an ESP32 development board with an integrated 2.8″ ILI9341 TFT (320
 
 ### Commands
 
+Select the correct environment for your board. All `pio` commands accept `-e <env>` to target a specific board.
+
+**CYD 2.8″ (ILI9341 320×240)**
+
 ```bash
-pio run                      # build
-pio run --target upload      # build and flash
-pio device monitor           # open serial monitor (115200 baud)
+pio run -e esp32-cyd-28                          # build only
+pio run -e esp32-cyd-28 --target upload          # build and flash
+pio device monitor --environment esp32-cyd-28    # serial monitor (115200 baud)
 ```
 
-On boot the firmware prints the version, heap usage, and the full active pattern list.
-At each pattern transition it logs the average fps for the outgoing effect and the name of the next.
+**CYD 4.0″ (ST7796S 480×320)**
+
+```bash
+pio run -e esp32-cyd-40                          # build only
+pio run -e esp32-cyd-40 --target upload          # build and flash
+pio device monitor --environment esp32-cyd-40    # serial monitor (115200 baud)
+```
+
+In VSCode with the PlatformIO extension, use the environment picker in the status bar (bottom of the window) to select `esp32-cyd-28` or `esp32-cyd-40` before clicking Build or Upload.
+
+On boot the firmware prints the board name, version, heap usage, and the full active pattern list. At each pattern transition it logs the average fps for the outgoing effect and the name of the next.
 
 ---
 
 ## Browser Demo
 
 The repo also includes a browser-native implementation of Aurora Demo under
-[`web/`](/Users/anthonyjclarke/PlatformIO/Projects/AuroraDemo_CYD/web). It is a
-separate static app that mirrors the animation set for desktop/mobile browsers;
+[`web/`](web/). It is a separate static app that mirrors the animation set for desktop/mobile browsers;
 it is not served by the ESP32 and does not change the firmware runtime.
 
 ### Run
 
-Open [`web/index.html`](/Users/anthonyjclarke/PlatformIO/Projects/AuroraDemo_CYD/web/index.html)
+Open [`web/index.html`](web/index.html)
 directly in a browser, or serve the `web/` folder with any static web server:
 
 ```bash
@@ -175,12 +193,18 @@ effects.ClearFrame()        zero leds[] framebuffer
       ↓
 pattern.drawFrame()         active pattern writes CRGB values to effects.leds[XY(x, y)]
       ↓
-effects.ShowFrame()         scale each pixel 2×2 → push to ILI9341 via tft.pushImage()
+effects.ShowFrame()         scale each pixel DISPLAY_SCALE × DISPLAY_SCALE
+                            → push to TFT via tft.pushImage()
 ```
 
-The virtual canvas is **160×120 pixels**. Each canvas pixel is rendered as a 2×2 block on the 320×240 display. Patterns work in canvas coordinates; the scaling is handled transparently by `ShowFrame()`.
+Patterns work in virtual canvas coordinates. `ShowFrame()` handles the upscale transparently via the `DISPLAY_SCALE` build flag:
 
-The three large buffers (`leds[]`, `heat[]`, `noise[][]` — ~96 KB combined) are heap-allocated in `Effects::Setup()` rather than placed in the linker's BSS segment, which would otherwise overflow at this canvas size.
+| Board     | Canvas   | Scale | Output     |
+|:----------|:---------|:------|:-----------|
+| CYD 2.8″  | 160×120  | 2×    | 320×240    |
+| CYD 4.0″  | 120×80   | 4×    | 480×320    |
+
+The three large buffers (`leds[]`, `heat[]`, `noise[][]`) are heap-allocated in `Effects::Setup()` rather than placed in the linker's BSS segment. Combined size: ~96 KB on the 2.8″ board, ~48 KB on the 4.0″ board.
 
 ---
 
@@ -196,16 +220,19 @@ Each transition clears both the TFT and the Aurora framebuffer before the next p
 
 ## Configuration
 
-| Setting           | Value   | Location                          |
-|:------------------|:--------|:----------------------------------|
-| Canvas width      | 160 px  | `platformio.ini` `-DMATRIX_WIDTH` |
-| Canvas height     | 120 px  | `platformio.ini` `-DMATRIX_HEIGHT`|
-| Pattern duration  | 20 s    | `main.cpp` `PATTERN_DURATION_MS`  |
-| Name overlay hold | 1.0 s   | `main.cpp` `NAME_HOLD_MS`         |
-| Touch debounce    | 250 ms  | `main.cpp` `TOUCH_DEBOUNCE_MS`    |
-| Target FPS        | 30      | `main.cpp` `default_fps`          |
-| Serial baud       | 115200  | `main.cpp` `Serial.begin()`       |
-| Debug level       | 3 (Info)| `platformio.ini` `-DDEBUG_LEVEL`  |
+Board-specific settings (canvas size, scale, SPI speed, backlight GPIO, driver) are set via `platformio.ini` build flags per environment. Shared runtime constants live in `src/main.cpp`.
+
+| Setting           | CYD 2.8″         | CYD 4.0″         | Location                           |
+|:------------------|:-----------------|:-----------------|:-----------------------------------|
+| Canvas width      | 160 px           | 120 px           | `platformio.ini` `-DMATRIX_WIDTH`  |
+| Canvas height     | 120 px           | 80 px            | `platformio.ini` `-DMATRIX_HEIGHT` |
+| Display scale     | 2×               | 4×               | `platformio.ini` `-DDISPLAY_SCALE` |
+| Pattern duration  | 20 s             | 20 s             | `main.cpp` `PATTERN_DURATION_MS`   |
+| Name overlay hold | 1.0 s            | 1.0 s            | `main.cpp` `NAME_HOLD_MS`          |
+| Touch debounce    | 250 ms           | 250 ms           | `main.cpp` `TOUCH_DEBOUNCE_MS`     |
+| Target FPS        | 30               | 30               | `main.cpp` `default_fps`           |
+| Serial baud       | 115200           | 115200           | `main.cpp` `Serial.begin()`        |
+| Debug level       | 3 (Info)         | 3 (Info)         | `platformio.ini` `-DDEBUG_LEVEL`   |
 
 Debug levels: 0 = Off, 1 = Error, 2 = Warn, 3 = Info, 4 = Verbose.
 

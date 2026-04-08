@@ -131,19 +131,21 @@ public:
 
   void ShowFrame() {
     currentPalette = targetPalette;
-    // Each Aurora pixel is rendered as a 2×2 block to fill the TFT.
-    // Build one scaled scanline at a time and push it twice (once per TFT row).
-    static uint16_t rowbuf[MATRIX_WIDTH * 2];
+    // Each Aurora pixel is scaled DISPLAY_SCALE× in both axes to fill the TFT.
+    // CYD 2.8" (160×120 × 2 = 320×240), CYD 3.5" (120×80 × 4 = 480×320).
+    static uint16_t rowbuf[MATRIX_WIDTH * DISPLAY_SCALE];
     tft.startWrite();
     for (int y = 0; y < MATRIX_HEIGHT; y++) {
       for (int x = 0; x < MATRIX_WIDTH; x++) {
         CRGB &c = leds[XY(x, y)];
         uint16_t color = tft.color565(c.r, c.g, c.b);
-        rowbuf[x * 2]     = color;
-        rowbuf[x * 2 + 1] = color;
+        for (int s = 0; s < DISPLAY_SCALE; s++) {
+          rowbuf[x * DISPLAY_SCALE + s] = color;
+        }
       }
-      tft.pushImage(0, y * 2,     MATRIX_WIDTH * 2, 1, rowbuf);
-      tft.pushImage(0, y * 2 + 1, MATRIX_WIDTH * 2, 1, rowbuf);
+      for (int s = 0; s < DISPLAY_SCALE; s++) {
+        tft.pushImage(0, y * DISPLAY_SCALE + s, MATRIX_WIDTH * DISPLAY_SCALE, 1, rowbuf);
+      }
     }
     tft.endWrite();
   }
@@ -210,9 +212,18 @@ public:
   static const int RandomPaletteIndex = 9;
 
   void Setup() {
-    leds  = new CRGB[NUM_LEDS]();
-    heat  = new byte[NUM_LEDS]();
-    noise = new uint8_t[MATRIX_WIDTH][MATRIX_HEIGHT]();
+    // Use PSRAM for large buffers when available — required for 240×160 canvas
+    // (~192 KB total) which exceeds the free SRAM heap on most CYD boards.
+    // Falls back to regular heap for smaller canvas sizes or PSRAM-less boards.
+    if (ESP.getFreePsram() > 0) {
+      leds  = (CRGB*)       ps_calloc(NUM_LEDS,                        sizeof(CRGB));
+      heat  = (byte*)       ps_calloc(NUM_LEDS,                        sizeof(byte));
+      noise = (uint8_t(*)[MATRIX_HEIGHT]) ps_calloc(MATRIX_WIDTH * MATRIX_HEIGHT, sizeof(uint8_t));
+    } else {
+      leds  = new CRGB[NUM_LEDS]();
+      heat  = new byte[NUM_LEDS]();
+      noise = new uint8_t[MATRIX_WIDTH][MATRIX_HEIGHT]();
+    }
     currentPalette = RainbowColors_p;
     loadPalette(0);
     NoiseVariablesSetup();
