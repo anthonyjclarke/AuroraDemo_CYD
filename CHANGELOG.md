@@ -13,12 +13,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [0.6.0] — 2026-04-09
 
 ### Added
-- **CYD 3.5" board variant** (ST7796, 480×320) as a second PlatformIO environment
-  (`env:esp32-cyd-35`, `-DBOARD_CYD_35=1`)
-- Virtual canvas 240×160 at 2× scale fills the full 480×320 display — same
-  rendering path as the 2.8" board, no `ShowFrame()` changes required
-- Per-board touch calibration via `#if defined(BOARD_CYD_35)` in `main.cpp`;
-  CYD 3.5" values are placeholders — recalibrate with a TFT_eSPI calibration sketch
+- **CYD 4.0" board variant** (ST7796S, 480×320) as a second PlatformIO environment
+  (`env:esp32-cyd-40`, `-DBOARD_CYD_40=1`)
+- Virtual canvas 120×80 at 4× scale fills the full 480×320 display using the
+  same rendering path as the 2.8" board via the `DISPLAY_SCALE` build flag
+- Per-board touch calibration via `#if defined(BOARD_CYD_40)` in `main.cpp`;
+  CYD 4.0" values are placeholders — recalibrate with a TFT_eSPI calibration sketch
 - Board-identified boot message names the active board and driver on serial output
 
 ### Changed
@@ -28,7 +28,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `PatternLife::world` heap-allocated in `start()`/`stop()` to prevent BSS overflow
   at larger canvas sizes (was a `Cell[MATRIX_WIDTH][MATRIX_HEIGHT]` class member)
 - `PatternMaze::Directions` enum given `uint8_t` underlying type; reduces `grid[]`
-  from 4 bytes/cell to 1 byte/cell, preventing BSS overflow at 240×160
+  from 4 bytes/cell to 1 byte/cell, reducing memory pressure on larger canvases
 - Version bumped to 0.6.0
 
 ---
@@ -192,4 +192,4 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-*Origins: Jason Coon / PixelMatix Aurora (2014) → mrfaptastic ESP32-HUB75 port → Anthony Clarke CYD port (2024)*
+*Origins: Jason Coon / PixelMatix Aurora (2014) → mrfaptastic ESP32-HUB75 port → Anthony Clarke CYD port (2026)*

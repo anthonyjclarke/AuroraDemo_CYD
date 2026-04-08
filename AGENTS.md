@@ -4,40 +4,60 @@ Repository: <https://github.com/anthonyjclarke/AuroraDemo_CYD>
 
 ## Project Overview
 
-ESP32-based visual effects demo running 29 procedurally-animated patterns on the **Cheap Yellow Display (CYD)** — an ESP32 dev board with an integrated 2.8" ILI9341 320×240 TFT and XPT2046 resistive touch screen.
+ESP32-based visual effects demo running 29 procedurally-animated patterns on the **Cheap Yellow Display (CYD)** family. Two board variants are supported, each with its own PlatformIO environment:
 
-- **Version**: 0.5.1 (`VERSION_STRING` in `src/main.cpp`)
+| Env               | Board ID           | Driver  | Display | Canvas  | Scale | Heap buffers |
+|:------------------|:-------------------|:--------|:--------|:--------|:------|:-------------|
+| `esp32-cyd-28`    | ESP32-2432S028R    | ILI9341 | 320×240 | 160×120 | 2×    | ~96 KB       |
+| `esp32-cyd-40`    | ESP32-32E          | ST7796S | 480×320 | 120×80  | 4×    | ~48 KB       |
+
+- **Version**: 0.6.0 (`VERSION_STRING` in `src/main.cpp`)
 - **Active patterns**: 29, rotate every 20 s (or on touch)
-- **Virtual canvas**: 160×120 px, scaled 2×2 → 320×240 on the TFT
-- **Origins**: Jason Coon / PixelMatix Aurora (2014) → mrfaptastic ESP32-HUB75 port → Anthony Clarke CYD port (2024)
+- **Origins**: Jason Coon / PixelMatix Aurora (2014) → mrfaptastic ESP32-HUB75 port → Anthony Clarke CYD port (2026)
+
+The repository contains **two parallel targets**:
+- **ESP32 CYD firmware** — PlatformIO project (root of repo)
+- **Browser demo** — standalone static web app in `web/`, 27 patterns, no build step required
 
 ---
 
 ## Hardware
 
-- **MCU**: ESP32 (`esp32dev` board in PlatformIO)
-- **Display**: ILI9341 2.8" TFT, 320×240, driven by `TFT_eSPI`
-- **Touch**: XPT2046 resistive controller, shares SPI bus
+- **MCU**: ESP32 (`esp32dev` board in PlatformIO) — both boards
+- **Display**: ILI9341 (CYD 2.8") or ST7796S (CYD 4.0"), driven by `TFT_eSPI`
+- **Touch**: XPT2046 resistive controller, shares SPI bus on both boards
 
 ### Pin Mapping
 
-| Signal     | GPIO | Signal        | GPIO   |
-|:-----------|:-----|:--------------|:-------|
-| TFT MOSI   | 13   | TFT SCLK      | 14     |
-| TFT CS     | 15   | TFT DC        | 2      |
-| TFT RST    | —    | Backlight     | 21     |
-| Touch CS   | 33   | SPI main      | 55 MHz |
+Most pins are identical across both boards. The backlight GPIO and SPI frequency differ.
 
-Touch calibration (landscape, rotation 1): `{ 339, 3470, 237, 3580, 7 }` — replace with unit-specific values from a calibration sketch if tap accuracy matters.
+| Signal     | GPIO | Note                              |
+|:-----------|:-----|:----------------------------------|
+| TFT MOSI   | 13   | Both boards                       |
+| TFT SCLK   | 14   | Both boards                       |
+| TFT CS     | 15   | Both boards                       |
+| TFT DC     | 2    | Both boards                       |
+| TFT MISO   | 12   | Both boards                       |
+| TFT RST    | —    | Not connected on either board     |
+| Touch CS   | 33   | Both boards                       |
+| Backlight  | 21   | CYD 2.8" only (`BOARD_CYD_28`)    |
+| Backlight  | 27   | CYD 4.0" only (`BOARD_CYD_40`)    |
+| SPI freq   | 55 MHz | CYD 2.8" (`-DSPI_FREQUENCY`)   |
+| SPI freq   | 27 MHz | CYD 4.0" (`-DSPI_FREQUENCY`)   |
+
+Touch calibration (landscape, rotation 1) is set per board via `#if defined(BOARD_CYD_40)` in `main.cpp`. The 4.0" values are placeholders — run the TFT_eSPI calibration example on the physical unit and replace them.
+
+- CYD 2.8": `{ 339, 3470, 237, 3580, 7 }`
+- CYD 4.0": `{ 300, 3600, 200, 3700, 7 }` (PLACEHOLDER — recalibrate)
 
 ---
 
 ## Libraries
 
-| Library                | Version   | Purpose                              |
-|:-----------------------|:----------|:-------------------------------------|
-| `bodmer/TFT_eSPI`      | `^2.5.43` | ILI9341 display driver + touch       |
-| `fastled/FastLED`      | `^3.4.0`  | Color maths, palettes, noise         |
+| Library                | Version   | Purpose                                  |
+|:-----------------------|:----------|:-----------------------------------------|
+| `bodmer/TFT_eSPI`      | `^2.5.43` | ILI9341/ST7796 display driver + touch    |
+| `fastled/FastLED`      | `^3.4.0`  | Color maths, palettes, noise             |
 
 TFT_eSPI is configured entirely via `build_flags` — no `User_Setup.h` file needed.
 
@@ -62,6 +82,12 @@ lib/
     Attractor.h         Gravitational attractor for boid physics
     Geometry.h          3D structs: Vertex, Point, EdgePoint, squareFace, triFace
     PatternXxx.h        One file per pattern (29 active)
+
+web/                    Browser demo (separate target, not served by the ESP32)
+  index.html            Entry point
+  app.js                Canvas renderer + 27 pattern implementations (plain JS)
+  styles.css            UI styling
+  README.md             Run instructions for the browser demo
 ```
 
 All pattern files are **header-only** (inline implementations, no `.cpp` files).
@@ -73,28 +99,34 @@ All pattern files are **header-only** (inline implementations, no `.cpp` files).
 ```
 effects.ClearFrame()          zero leds[] (memset)
   └─ pattern.drawFrame()      write CRGB values to effects.leds[XY(x, y)]
-       └─ effects.ShowFrame() build RGB565 scanlines → tft.pushImage() × 2 per row
+       └─ effects.ShowFrame() build RGB565 scanlines → tft.pushImage() × DISPLAY_SCALE per row
 ```
 
-`ShowFrame()` scales each 160×1 Aurora scanline to two 320×1 TFT rows.
+`ShowFrame()` scales each virtual scanline to `DISPLAY_SCALE` physical TFT rows using the `DISPLAY_SCALE` build flag (2 on the 2.8" board, 4 on the 4.0" board). The code path is identical; only the multiplier differs.
+
 `XY(x, y)` returns `(y * MATRIX_WIDTH) + x + 1` — offset by 1 so index 0 safely absorbs out-of-bounds writes (never displayed).
 
-### Key Constants
+### Key Constants (per-board — set via platformio.ini build flags)
 
-```cpp
-MATRIX_WIDTH    = 160    MATRIX_HEIGHT    = 120
-MATRIX_CENTER_X = 80     MATRIX_CENTER_Y  = 60
-MATRIX_CENTRE_X = 79     MATRIX_CENTRE_Y  = 59   // byte (off-by-one variants)
-NUM_LEDS        = 19201                           // (160 × 120) + 1
-```
+| Constant          | CYD 2.8"  | CYD 4.0"  |
+|:------------------|:----------|:----------|
+| `MATRIX_WIDTH`    | 160       | 120       |
+| `MATRIX_HEIGHT`   | 120       | 80        |
+| `MATRIX_CENTER_X` | 80        | 60        |
+| `MATRIX_CENTER_Y` | 60        | 40        |
+| `MATRIX_CENTRE_X` | 79        | 59        |
+| `MATRIX_CENTRE_Y` | 59        | 39        |
+| `DISPLAY_SCALE`   | 2         | 4         |
+| `NUM_LEDS`        | 19201     | 9601      |
 
 ### Heap-Allocated Buffers (initialised in `Effects::Setup()`)
 
-| Buffer                       | Size      | Why heap, not BSS               |
-|:-----------------------------|:----------|:--------------------------------|
-| `CRGB *leds`                 | ~57.6 KB  | Prevents `dram0_0_seg` overflow |
-| `byte *heat`                 | ~18.8 KB  | Same reason                     |
-| `uint8_t (*noise)[120]`      | ~18.8 KB  | Same reason                     |
+| Buffer                  | CYD 2.8" (160×120) | CYD 4.0" (120×80) | Why heap, not BSS               |
+|:------------------------|:-------------------|:------------------|:--------------------------------|
+| `CRGB *leds`            | ~57.6 KB           | ~28.8 KB          | Prevents `dram0_0_seg` overflow |
+| `byte *heat`            | ~18.8 KB           | ~9.6 KB           | Same reason                     |
+| `uint8_t (*noise)[H]`   | ~18.8 KB           | ~9.6 KB           | Same reason                     |
+| **Total**               | **~95 KB**         | **~48 KB**        | Free heap before: ~327 KB       |
 
 ---
 
@@ -112,12 +144,12 @@ NUM_LEDS        = 19201                           // (160 × 120) + 1
 |  8 | PatternElectricMandala     | ElectricMandala    | Perlin noise + 4-fold caleidoscope symmetry       |
 |  9 | PatternSpin                | Spin               | Accelerating/decelerating circular particle       |
 | 10 | PatternSimplexNoise        | SimplexNoise       | Direct Perlin noise → colour mapping              |
-| 11 | PatternWave                | Wave               | Travelling waves, 4 rotation modes               |
+| 11 | PatternWave                | Wave               | Travelling waves, 4 rotation modes                |
 | 12 | PatternAttract             | Attract            | Boids orbiting gravity attractor                  |
 | 13 | PatternSwirl               | Swirl              | `DimAll` blur + sine wave modulation              |
 | 14 | PatternBounce              | Bounce             | Gravity-bouncing particle system                  |
 | 15 | PatternFlock               | Flock              | Craig Reynolds boid flocking                      |
-| 16 | PatternInfinity            | Infinity           | Lissajous figure-8 curves                        |
+| 16 | PatternInfinity            | Infinity           | Lissajous figure-8 curves                         |
 | 17 | PatternPlasma              | Plasma             | Sine wave interference                            |
 | 18 | PatternInvadersSmall       | Invaders Small     | Space Invader sprites, 1×1 px cells               |
 | 19 | PatternInvadersMedium      | Invaders Medium    | Space Invader sprites, tiled 4×4 px cells         |
@@ -233,49 +265,65 @@ All macros accept `printf`-style format strings and append `\n` automatically.
 
 ## Touch Interaction
 
-- **Any tap** → immediate advance to next pattern (same path as 20 s timer)
-- Raw-pressure edge detection + 250 ms debounce prevents accidental repeats
-- Touch CS GPIO 33 enabled via `-DTOUCH_CS=33` build flag
-- Calibration: `static uint16_t touchCal[5] = { 339, 3470, 237, 3580, 7 }` in `main.cpp`
+- Any tap advances to the next pattern immediately
+- Raw-pressure edge detection uses `TOUCH_Z_THRESHOLD` and `TOUCH_RELEASE_Z`
+- Release detected via hysteresis: `rawZ < TOUCH_RELEASE_Z` (120) resets `prev_touched`
+- 250 ms debounce (`TOUCH_DEBOUNCE_MS`) prevents rapid re-firing
+- `in_pattern_transition` flag blocks touch during transitions
+- Touch CS GPIO 33 enabled via `-DTOUCH_CS=33` build flag (both boards)
+- Calibration is board-conditional in `main.cpp`:
+  - `BOARD_CYD_28`: `{ 339, 3470, 237, 3580, 7 }`
+  - `BOARD_CYD_40`: `{ 300, 3600, 200, 3700, 7 }` — PLACEHOLDER, recalibrate with TFT_eSPI calibration sketch
 
 ---
 
 ## Pattern Transition Sequence
 
-```
+```cpp
 patterns.stop()
 effects.ClearFrame()
 effects.ShowFrame()          // flush black frame so old pattern does not bleed through
-patterns.moveRandom(1)         // Fisher-Yates shuffled advance
-showPatternName(name)          // black screen + bitmap text overlay, 1.0 s
-tft.fillScreen(TFT_BLACK)      // clear before animation starts
-patterns.start()
+patterns.moveRandom(1)       // Fisher-Yates shuffled advance
+showPatternName(name)        // black screen + bitmap text overlay, 1.0 s
+tft.fillScreen(TFT_BLACK)    // clear before animation starts
+patterns.start()             // second start() call on the new pattern (required)
 ```
 
 ---
 
 ## Serial Output (115200 baud)
 
+Boot message is board-identified. Examples:
+
+```text
+[INFO] === Aurora Demo v0.6.0 — CYD 2.8" (ILI9341 320x240) ===
+[INFO] === Aurora Demo v0.6.0 — CYD 4.0" (ST7796S 480x320) ===
 ```
-=== Aurora Demo v0.5.1 — CYD Edition ===
-[INFO] Heap after effects.Setup(): 241532 bytes free
-[INFO] Patterns loaded: { "count": 29, "results": [ … ] }
+
+```text
+[INFO] Heap before effects.Setup(): 327100 bytes free, PSRAM: 0 bytes free
+[INFO] Heap after effects.Setup(): 241532 bytes free, PSRAM: 0 bytes free
+[INFO] Patterns loaded:
+{
+  "count": 29,
+  "results": [ ... ]
+}
 [INFO] [start] Plasma
 [INFO] [done] Plasma              avg fps: 28
 [INFO] [next] Cube
 ```
 
-FPS is reported **once per transition** (average over the full pattern duration) — not every second.
+FPS is reported once per transition, not every second.
 
 ---
 
 ## Key Implementation Notes
 
-- **No HUB75 code** — entirely removed. No `matrix` object, no `#ifdef CYD_DISPLAY` guards.
-- **`blur2d()` not used** — the FastLED v3.4+ flat-pointer overload asserts without an `XYMap`. PatternSwirl and PatternCube use `effects.DimAll()` instead (same visual result).
-- **All pattern headers** use `#ifndef PatternFoo_H` / `#define PatternFoo_H` guards.
-- **`noise_x`, `noise_y`, `noise_z`, `noise_scale_x`, `noise_scale_y`, `noisesmoothing`** are file-scope globals in `Effects.h` — accessed directly (without `effects.`) by noise-smearing patterns.
-- **`tft` global** declared in `main.cpp` before `#include "Effects.h"` — this ordering is mandatory.
-- **Pattern scaling**: Invaders Small, Medium, and Large all tile dynamically across the 160×120 canvas; PatternCube uses `focal=90`, `cubeWidth=90`, and a sinusoidal `zCamera` range of 280–380 (must exceed `cubeWidth × √3 ≈ 156`).
-- **PatternMultipleStream** now seeds motion across the full canvas and explicitly calls `effects.ShowFrame()` each pass.
-- **PatternSpin** uses bounded arc sampling rather than an unbounded coordinate-matching loop, which prevents the old runtime hang.
+- No HUB75 code remains in the project.
+- `blur2d()` is not used; `effects.DimAll()` replaces it in the affected patterns.
+- All pattern headers use classic `#ifndef PatternFoo_H` guards.
+- `noise_x`, `noise_y`, `noise_z`, `noise_scale_x`, `noise_scale_y`, and `noisesmoothing` are file-scope globals in `Effects.h`.
+- `tft` is declared in `main.cpp` before `Effects.h`; that ordering is required.
+- PatternCube uses `focal=90`, `cubeWidth=90`, and `zCamera` in the 280–380 range.
+- PatternMultipleStream seeds across the full active canvas and explicitly calls `effects.ShowFrame()`.
+- PatternSpin uses bounded arc sampling, avoiding the old runtime hang.
