@@ -23,8 +23,6 @@
  *
  * RUNTIME CONTROL:
  *   Set debugLevel variable (0-4) to change verbosity at runtime
- *   Web API: GET /api/debug  →  {"level": N}
- *            POST /api/debug  body: level=N
  */
 
 #ifndef DEBUG_LEVEL
@@ -37,7 +35,7 @@
 #define DBG_LEVEL_INFO    3
 #define DBG_LEVEL_VERBOSE 4
 
-// Runtime debug level - adjustable via web API
+// Runtime debug level - adjustable in code at runtime
 static uint8_t debugLevel = DEBUG_LEVEL;
 
 // clang-format off

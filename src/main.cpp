@@ -19,10 +19,10 @@
  * Rendering pipeline:
  *   effects.ClearFrame()  →  pattern.drawFrame()  →  effects.ShowFrame()
  *
- * Canvas: MATRIX_WIDTH × MATRIX_HEIGHT virtual, scaled 2×2 to fill the TFT.
+ * Canvas: MATRIX_WIDTH × MATRIX_HEIGHT virtual, scaled by DISPLAY_SCALE to fill the TFT.
  *   CYD 2.8" (ILI9341): 160×120 × 2 = 320×240   (~96 KB buffers)
  *   CYD 4.0" (ST7796):  120×80  × 4 = 480×320   (~48 KB buffers)
- * leds[], heat[], and noise[][] are heap-allocated in Effects::Setup() so
+ * leds[], heat[], and noise[][] are runtime-allocated in Effects::Setup() so
  * the large buffers don't overflow the linker's BSS segment.
  *
  * Hardware — CYD pin mapping (configured via TFT_eSPI build flags):

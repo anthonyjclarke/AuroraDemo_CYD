@@ -17,7 +17,7 @@ ESP32-based visual effects demo running 29 procedurally-animated patterns on the
 
 The repository contains **two parallel targets**:
 - **ESP32 CYD firmware** — PlatformIO project (root of repo)
-- **Browser demo** — standalone static web app in `web/`, 27 patterns, no build step required
+- **Browser demo** — standalone static web app in `web/`, 27 JavaScript patterns on a 64×64 canvas, no build step required
 
 ---
 
@@ -119,14 +119,14 @@ effects.ClearFrame()          zero leds[] (memset)
 | `DISPLAY_SCALE`   | 2         | 4         |
 | `NUM_LEDS`        | 19201     | 9601      |
 
-### Heap-Allocated Buffers (initialised in `Effects::Setup()`)
+### Runtime-Allocated Buffers (initialised in `Effects::Setup()`)
 
-| Buffer                  | CYD 2.8" (160×120) | CYD 4.0" (120×80) | Why heap, not BSS               |
-|:------------------------|:-------------------|:------------------|:--------------------------------|
-| `CRGB *leds`            | ~57.6 KB           | ~28.8 KB          | Prevents `dram0_0_seg` overflow |
-| `byte *heat`            | ~18.8 KB           | ~9.6 KB           | Same reason                     |
-| `uint8_t (*noise)[H]`   | ~18.8 KB           | ~9.6 KB           | Same reason                     |
-| **Total**               | **~95 KB**         | **~48 KB**        | Free heap before: ~327 KB       |
+| Buffer                  | CYD 2.8" (160×120) | CYD 4.0" (120×80) | Allocation path                               |
+|:------------------------|:-------------------|:------------------|:----------------------------------------------|
+| `CRGB *leds`            | ~57.6 KB           | ~28.8 KB          | `new[]` on CYD boards, `ps_calloc()` if PSRAM |
+| `byte *heat`            | ~18.8 KB           | ~9.6 KB           | same                                           |
+| `uint8_t (*noise)[H]`   | ~18.8 KB           | ~9.6 KB           | same                                           |
+| **Total**               | **~95 KB**         | **~48 KB**        | avoids BSS overflow                            |
 
 ---
 
@@ -175,7 +175,7 @@ const unsigned long TOUCH_DEBOUNCE_MS   = 250;   // touch repeat guard
 unsigned int        default_fps         = 30;    // fallback frame rate
 ```
 
-Patterns return delay-ms from `drawFrame()` (0 = uncapped, uses `default_fps`). Main loop uses `millis()` — no blocking `delay()` in the render path.
+Patterns return delay-ms from `drawFrame()` (0 = uncapped, uses `default_fps`). The main render loop uses `millis()`. Exception: `showPatternName()` currently uses a blocking `delay(NAME_HOLD_MS)` during transitions.
 
 ---
 
@@ -280,13 +280,16 @@ All macros accept `printf`-style format strings and append `\n` automatically.
 ## Pattern Transition Sequence
 
 ```cpp
-patterns.stop()
+patterns.stop()                    // stop current pattern
 effects.ClearFrame()
-effects.ShowFrame()          // flush black frame so old pattern does not bleed through
-patterns.moveRandom(1)       // Fisher-Yates shuffled advance
-showPatternName(name)        // black screen + bitmap text overlay, 1.0 s
-tft.fillScreen(TFT_BLACK)    // clear before animation starts
-patterns.start()             // second start() call on the new pattern (required)
+effects.ShowFrame()                // flush black frame
+patterns.moveRandom(1)             // advance shuffled index; internally stops old
+                                   // item again and starts the new one
+showPatternName(name)              // ClearFrame → fillScreen(BLACK) → draw bitmap
+                                   // text → delay(1000) → ClearFrame → fillScreen(BLACK)
+effects.ClearFrame()
+patterns.start()                   // second start() call on the new pattern (redundant
+                                   // but harmless — matches structure of moveRandom)
 ```
 
 ---
@@ -313,6 +316,8 @@ Boot message is board-identified. Examples:
 [INFO] [next] Cube
 ```
 
+Note: `listPatterns()` writes directly via `Serial.println()` (no `[INFO]` prefix on the JSON block).
+
 FPS is reported once per transition, not every second.
 
 ---
@@ -320,10 +325,13 @@ FPS is reported once per transition, not every second.
 ## Key Implementation Notes
 
 - No HUB75 code remains in the project.
+- `PatternTest` is declared in `Patterns.h` but is not present in `items[]`, so it never appears in the active rotation.
 - `blur2d()` is not used; `effects.DimAll()` replaces it in the affected patterns.
 - All pattern headers use classic `#ifndef PatternFoo_H` guards.
 - `noise_x`, `noise_y`, `noise_z`, `noise_scale_x`, `noise_scale_y`, and `noisesmoothing` are file-scope globals in `Effects.h`.
 - `tft` is declared in `main.cpp` before `Effects.h`; that ordering is required.
+- `PatternLife::world` is allocated in `start()` and freed in `stop()` to avoid BSS overflow; it uses `ps_calloc()` if PSRAM exists, otherwise `new[]`.
+- `Effects::Setup()` uses `ps_calloc()` when PSRAM is available, otherwise normal heap allocation; current CYD targets run on the heap path.
 - PatternCube uses `focal=90`, `cubeWidth=90`, and `zCamera` in the 280–380 range.
 - PatternMultipleStream seeds across the full active canvas and explicitly calls `effects.ShowFrame()`.
 - PatternSpin uses bounded arc sampling, avoiding the old runtime hang.

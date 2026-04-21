@@ -17,7 +17,7 @@ ESP32-based visual effects demo running 29 procedurally-animated patterns on the
 
 The repository contains **two parallel targets**:
 - **ESP32 CYD firmware** — PlatformIO project (root of repo)
-- **Browser demo** — standalone static web app in `web/`, 27 patterns, no build step required
+- **Browser demo** — standalone static web app in `web/`, 27 JavaScript patterns on a 64×64 canvas, no build step required
 
 ---
 
@@ -119,14 +119,14 @@ effects.ClearFrame()          zero leds[] (memset)
 | `DISPLAY_SCALE`   | 2         | 4         |
 | `NUM_LEDS`        | 19201     | 9601      |
 
-### Heap-Allocated Buffers (initialised in `Effects::Setup()`)
+### Runtime-Allocated Buffers (initialised in `Effects::Setup()`)
 
-| Buffer                  | CYD 2.8" (160×120) | CYD 4.0" (120×80) | Why heap, not BSS               |
-|:------------------------|:-------------------|:------------------|:--------------------------------|
-| `CRGB *leds`            | ~57.6 KB           | ~28.8 KB          | Prevents `dram0_0_seg` overflow |
-| `byte *heat`            | ~18.8 KB           | ~9.6 KB           | Same reason                     |
-| `uint8_t (*noise)[H]`   | ~18.8 KB           | ~9.6 KB           | Same reason                     |
-| **Total**               | **~95 KB**         | **~48 KB**        | Free heap before: ~327 KB       |
+| Buffer                  | CYD 2.8" (160×120) | CYD 4.0" (120×80) | Allocation path                               |
+|:------------------------|:-------------------|:------------------|:----------------------------------------------|
+| `CRGB *leds`            | ~57.6 KB           | ~28.8 KB          | `new[]` on CYD boards, `ps_calloc()` if PSRAM |
+| `byte *heat`            | ~18.8 KB           | ~9.6 KB           | same                                           |
+| `uint8_t (*noise)[H]`   | ~18.8 KB           | ~9.6 KB           | same                                           |
+| **Total**               | **~95 KB**         | **~48 KB**        | avoids BSS overflow                            |
 
 ---
 
@@ -336,7 +336,7 @@ A separate static web app that mirrors the Aurora animations for desktop/mobile 
 - **Canvas**: 64×64 virtual grid rendered on an HTML5 `<canvas>`
 - **Patterns**: 27 (the three `Invaders` variants are merged into one; all others match the firmware)
 - **Palettes**: Solar, Ocean, Forest, Lava, Ice, Neon
-- **Controls**: pattern selector, palette selector, previous/next, shuffle, autoplay toggle, duration slider, live FPS display
+- **Controls**: pattern selector, palette selector, previous/next, shuffle, autoplay toggle, duration input, fullscreen-on-canvas click, live FPS display
 - **Run**: open `web/index.html` in a browser, or `cd web && python3 -m http.server` → `http://localhost:8000`
 
 The JS pattern implementations are loosely analogous to the C++ originals but are independent re-implementations — they share no code with the firmware.
@@ -346,8 +346,9 @@ The JS pattern implementations are loosely analogous to the C++ originals but ar
 ## Key Implementation Notes
 
 - **`PatternTest`** is declared in `Patterns.h` and `PatternTest.h` is included, but `patternTest` is **not** in `items[]` — it never appears in the rotation.
-- **`PatternLife::world`** is heap-allocated (`new Cell[MATRIX_WIDTH][MATRIX_HEIGHT]`) in `start()` / freed in `stop()` to avoid BSS overflow. Any pattern with a canvas-sized array must do the same.
+- **`PatternLife::world`** is allocated in `start()` and freed in `stop()` to avoid BSS overflow; it uses `ps_calloc()` if PSRAM exists, otherwise `new[]`.
 - **`PatternMaze::Directions`** uses `enum Directions : uint8_t` so the `grid[width][height]` member stays at 1 byte/cell instead of 4, preventing BSS overflow.
+- **`Effects::Setup()`** uses `ps_calloc()` when PSRAM is available, otherwise normal heap allocation; current CYD targets run on the heap path.
 - **No HUB75 code** — entirely removed. No `matrix` object, no `#ifdef CYD_DISPLAY` guards.
 - **`blur2d()` not used** — the FastLED v3.4+ flat-pointer overload asserts without an `XYMap`. PatternSwirl and PatternCube use `effects.DimAll()` instead (same visual result).
 - **All pattern headers** use `#ifndef PatternFoo_H` / `#define PatternFoo_H` guards.

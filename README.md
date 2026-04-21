@@ -8,7 +8,7 @@
 ![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
 ![Status](https://img.shields.io/badge/status-stable-green.svg)
 
-Procedurally animated visual effects running on the **ESP32 Cheap Yellow Display** (CYD) family. Two board variants are supported: the 2.8″ ILI9341 (320×240) and the 4.0″ ST7796S (480×320). Each has its own PlatformIO build environment; all 29 patterns run identically on both.
+Procedurally animated visual effects running on the **ESP32 Cheap Yellow Display** (CYD) family. Two board variants are supported: the 2.8″ ILI9341 (320×240) and the 4.0″ ST7796S (480×320). Each has its own PlatformIO build environment; all 29 firmware patterns run on both.
 
 Twenty-nine effects rotate automatically every 20 seconds. Tap the screen at any time to skip to the next effect immediately.
 
@@ -19,7 +19,7 @@ Repository: [github.com/anthonyjclarke/AuroraDemo_CYD](https://github.com/anthon
 This repository now contains two parallel Aurora Demo targets:
 
 - the **ESP32 CYD firmware** in the existing PlatformIO project
-- a **browser-native static web app** in [`web/`](web/)
+- a **browser-native static web app** in [`web/`](web/) with 27 JavaScript reimplementations
 
 ---
 
@@ -45,11 +45,9 @@ Both CYD variants are ESP32 development boards with an integrated TFT and XPT204
 | Display      | ILI9341 · 320×240 · SPI    | ST7796S · 480×320 · SPI    |
 | Touch        | XPT2046 resistive          | XPT2046 resistive          |
 | Flash        | 4 MB                       | 4 MB                       |
-| RAM          | 320 KB SRAM (no PSRAM)     | 520 KB SRAM (no PSRAM)     |
 | Canvas       | 160×120 @ 2× scale         | 120×80 @ 4× scale          |
 | SPI freq     | 55 MHz                     | 27 MHz                     |
 | Backlight    | GPIO 21                    | GPIO 27                    |
-| Colour order | BGR                        | BGR                        |
 
 ### Pin Mapping
 
@@ -100,8 +98,8 @@ On boot the firmware prints the board name, version, heap usage, and the full ac
 ## Browser Demo
 
 The repo also includes a browser-native implementation of Aurora Demo under
-[`web/`](web/). It is a separate static app that mirrors the animation set for desktop/mobile browsers;
-it is not served by the ESP32 and does not change the firmware runtime.
+[`web/`](web/). It is a separate static app for desktop/mobile browsers; it is
+not served by the ESP32 and does not change the firmware runtime.
 
 ### Run
 
@@ -115,8 +113,9 @@ python3 -m http.server
 
 Then visit `http://localhost:8000`.
 
-The browser app includes animation selection, palette selection, previous/next
-controls, shuffle, autoplay, duration control, and a live FPS/status panel.
+The browser app runs on a 64×64 canvas, includes 27 patterns, and exposes
+pattern selection, palette selection, previous/next controls, shuffle,
+autoplay duration, fullscreen, and a live FPS/status panel.
 
 ---
 
@@ -204,7 +203,7 @@ Patterns work in virtual canvas coordinates. `ShowFrame()` handles the upscale t
 | CYD 2.8″  | 160×120  | 2×    | 320×240    |
 | CYD 4.0″  | 120×80   | 4×    | 480×320    |
 
-The three large buffers (`leds[]`, `heat[]`, `noise[][]`) are heap-allocated in `Effects::Setup()` rather than placed in the linker's BSS segment. Combined size: ~96 KB on the 2.8″ board, ~48 KB on the 4.0″ board.
+The three large buffers (`leds[]`, `heat[]`, `noise[][]`) are allocated at runtime in `Effects::Setup()` rather than placed in the linker's BSS segment. On PSRAM-less CYD boards they live on the heap; if PSRAM is available they use `ps_calloc()`. Combined size is ~96 KB on the 2.8″ board and ~48 KB on the 4.0″ board.
 
 ---
 
@@ -214,7 +213,7 @@ Tap anywhere on the screen to advance to the next effect immediately — the sam
 
 Touch calibration constants are defined in `src/main.cpp`. The default values suit most CYD units in landscape orientation; if tap accuracy is important, run a calibration sketch and replace the five values.
 
-Each transition clears both the TFT and the Aurora framebuffer before the next pattern starts. The effect name is then shown briefly using a small built-in bitmap renderer rather than the TFT library font APIs, which proved unreliable on this target.
+Each transition clears both the TFT and the Aurora framebuffer before the next pattern starts. The effect name is then shown briefly using a small built-in bitmap renderer rather than the TFT library font APIs, which proved unreliable on this target. That overlay currently uses a blocking `delay(NAME_HOLD_MS)` during transitions.
 
 ---
 
@@ -230,6 +229,8 @@ Board-specific settings (canvas size, scale, SPI speed, backlight GPIO, driver) 
 | Pattern duration  | 20 s             | 20 s             | `main.cpp` `PATTERN_DURATION_MS`   |
 | Name overlay hold | 1.0 s            | 1.0 s            | `main.cpp` `NAME_HOLD_MS`          |
 | Touch debounce    | 250 ms           | 250 ms           | `main.cpp` `TOUCH_DEBOUNCE_MS`     |
+| Touch press Z     | 350              | 350              | `main.cpp` `TOUCH_Z_THRESHOLD`     |
+| Touch release Z   | 120              | 120              | `main.cpp` `TOUCH_RELEASE_Z`       |
 | Target FPS        | 30               | 30               | `main.cpp` `default_fps`           |
 | Serial baud       | 115200           | 115200           | `main.cpp` `Serial.begin()`        |
 | Debug level       | 3 (Info)         | 3 (Info)         | `platformio.ini` `-DDEBUG_LEVEL`   |
@@ -258,7 +259,7 @@ Debug levels: 0 = Off, 1 = Error, 2 = Warn, 3 = Info, 4 = Verbose.
 | [bodmer/TFT_eSPI](https://github.com/Bodmer/TFT_eSPI)     | `^2.5.43` | ILI9341 display driver + touch   |
 | [fastled/FastLED](https://github.com/FastLED/FastLED)     | `^3.4.0`  | Colour maths, palettes, noise    |
 
-TFT_eSPI is configured entirely via `build_flags` in `platformio.ini` — no `User_Setup.h` file is needed.
+TFT_eSPI is configured entirely through `platformio.ini` `build_flags`; there is no checked-in `User_Setup.h`.
 
 ---
 

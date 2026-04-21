@@ -30,9 +30,9 @@
  * CYD port notes (Anthony Clarke, 2024):
  *   - HUB75 DMA output path removed; ShowFrame() now pushes directly to
  *     an ILI9341 320×240 TFT via TFT_eSPI tft.pushImage().
- *   - Virtual canvas is MATRIX_WIDTH × MATRIX_HEIGHT (default 160×120), defined
- *     as PlatformIO build flags.  ShowFrame() scales each pixel to a 2×2 block
- *     to fill the 320×240 display.
+ *   - Virtual canvas is MATRIX_WIDTH × MATRIX_HEIGHT, defined as PlatformIO
+ *     build flags. ShowFrame() scales each pixel by DISPLAY_SCALE in both axes
+ *     to fill the active TFT.
  *   - Global `tft` object is declared in main.cpp before this header is included.
  */
 
@@ -88,7 +88,7 @@ uint8_t mapcos8(uint8_t theta, uint8_t lowest = 0, uint8_t highest = 255) {
   return result;
 }
 
-// Heap-allocated to keep BSS small enough for 160×120 canvas.
+// Runtime-allocated to keep BSS small enough for larger canvases.
 // Initialised in Effects::Setup().
 byte                  *heat    = nullptr;
 uint8_t             (*noise)[MATRIX_HEIGHT] = nullptr;
@@ -103,7 +103,7 @@ uint8_t noisesmoothing;
 
 class Effects {
 public:
-  CRGB *leds = nullptr;  // heap-allocated in Setup()
+  CRGB *leds = nullptr;  // runtime-allocated in Setup()
   //CRGB leds2[NUM_LEDS]; // Faptastic: getting rid of this and any dependant effects or algos. to save memory 24*64*32 bytes of ram (50k).
   
   
@@ -132,7 +132,7 @@ public:
   void ShowFrame() {
     currentPalette = targetPalette;
     // Each Aurora pixel is scaled DISPLAY_SCALE× in both axes to fill the TFT.
-    // CYD 2.8" (160×120 × 2 = 320×240), CYD 3.5" (120×80 × 4 = 480×320).
+    // CYD 2.8" uses 160×120 × 2 = 320×240; CYD 4.0" uses 120×80 × 4 = 480×320.
     static uint16_t rowbuf[MATRIX_WIDTH * DISPLAY_SCALE];
     tft.startWrite();
     for (int y = 0; y < MATRIX_HEIGHT; y++) {
@@ -212,9 +212,8 @@ public:
   static const int RandomPaletteIndex = 9;
 
   void Setup() {
-    // Use PSRAM for large buffers when available — required for 240×160 canvas
-    // (~192 KB total) which exceeds the free SRAM heap on most CYD boards.
-    // Falls back to regular heap for smaller canvas sizes or PSRAM-less boards.
+    // Use PSRAM for large buffers when available; otherwise fall back to the
+    // normal heap used by current CYD targets.
     if (ESP.getFreePsram() > 0) {
       leds  = (CRGB*)       ps_calloc(NUM_LEDS,                        sizeof(CRGB));
       heat  = (byte*)       ps_calloc(NUM_LEDS,                        sizeof(byte));
