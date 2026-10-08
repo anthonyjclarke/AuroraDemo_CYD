@@ -35,6 +35,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <TFT_eSPI.h>
+#include <esp_ota_ops.h>
 #include "config.h"     // FIRMWARE_VERSION, PROJECT_NAME
 #include "debug.h"
 
@@ -323,6 +324,7 @@ void setup() {
 #else
   DBG_INFO("=== Aurora Demo v" FIRMWARE_VERSION " — CYD 2.8\" (ILI9341 320x240) ===");
 #endif
+  DBG_INFO("Running from %s", esp_ota_get_running_partition()->label);
   DBG_INFO("Debug level: %d", debugLevel);
   DBG_INFO("Touch: CS=%d Z-threshold=%u", TOUCH_CS, TOUCH_Z_THRESHOLD);
 
