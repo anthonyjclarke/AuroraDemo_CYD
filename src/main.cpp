@@ -32,15 +32,10 @@
  *   0=Off  1=Error  2=Warn  3=Info (default)  4=Verbose
  */
 
-/* ─── Version ─────────────────────────────────────────────────────────────── */
-#define VERSION_MAJOR  0
-#define VERSION_MINOR  6
-#define VERSION_PATCH  0
-#define VERSION_STRING "0.6.0"
-
 #include <Arduino.h>
 #include <FastLED.h>
 #include <TFT_eSPI.h>
+#include "config.h"     // FIRMWARE_VERSION, PROJECT_NAME
 #include "debug.h"
 
 TFT_eSPI tft;   // display object — must be declared before Effects.h is included
@@ -324,9 +319,9 @@ void setup() {
   digitalWrite(TFT_BL, HIGH);  // backlight on
 
 #if defined(BOARD_CYD_40)
-  DBG_INFO("=== Aurora Demo v" VERSION_STRING " — CYD 4.0\" (ST7796S 480x320) ===");
+  DBG_INFO("=== Aurora Demo v" FIRMWARE_VERSION " — CYD 4.0\" (ST7796S 480x320) ===");
 #else
-  DBG_INFO("=== Aurora Demo v" VERSION_STRING " — CYD 2.8\" (ILI9341 320x240) ===");
+  DBG_INFO("=== Aurora Demo v" FIRMWARE_VERSION " — CYD 2.8\" (ILI9341 320x240) ===");
 #endif
   DBG_INFO("Debug level: %d", debugLevel);
   DBG_INFO("Touch: CS=%d Z-threshold=%u", TOUCH_CS, TOUCH_Z_THRESHOLD);

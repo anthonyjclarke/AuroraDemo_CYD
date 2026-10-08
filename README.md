@@ -1,6 +1,6 @@
 # Aurora Demo — ESP32 CYD Edition
 
-<!-- Update version badge when VERSION_STRING changes in src/main.cpp -->
+<!-- Update version badge when FIRMWARE_VERSION changes in include/config.h -->
 ![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-ESP32-green.svg)
 ![PlatformIO](https://img.shields.io/badge/PlatformIO-6.x-orange.svg)
