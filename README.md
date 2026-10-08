@@ -23,6 +23,32 @@ This repository now contains two parallel Aurora Demo targets:
 
 ---
 
+## Install
+
+**[anthonyjclarke.github.io/AuroraDemo_CYD][installer]** installs the latest
+release from the browser – no PlatformIO, no drivers to build. It needs
+desktop Chrome, Edge or Opera.
+
+1. Pick your board – 2.8″ or 4.0″.
+2. Plug it in with a USB data cable, click **Connect & install** and choose its
+   port.
+3. Say yes to erasing it. When flashing finishes the board resets and the demo
+   starts – there is no WiFi or anything else to set up.
+
+The demo has no WiFi and no settings, so it doesn't run Improv, and the
+installer can't recognise it on a board. It always offers **Install**, never
+**Update** – that is expected, and reinstalling loses nothing.
+
+Each [release][releases] also carries the images for flashing by hand.
+`*-merged.bin` is a clean install at `0x0` with esptool. `*-firmware.bin` is
+the app image alone, meant for web OTA; this firmware has no OTA, so use the
+merged image.
+
+[installer]: https://anthonyjclarke.github.io/AuroraDemo_CYD/
+[releases]: https://github.com/anthonyjclarke/AuroraDemo_CYD/releases
+
+---
+
 ## Origins & Credits
 
 | Layer                          | Author                     | Source                                                                                    |
@@ -92,6 +118,19 @@ pio device monitor --environment esp32-cyd-40    # serial monitor (115200 baud)
 In VSCode with the PlatformIO extension, use the environment picker in the status bar (bottom of the window) to select `esp32-cyd-28` or `esp32-cyd-40` before clicking Build or Upload.
 
 On boot the firmware prints the board name, version, heap usage, and the full active pattern list. At each pattern transition it logs the average fps for the outgoing effect and the name of the next.
+
+Release images are built only by CI, from a `v*` tag on `main`, and published
+to the web installer. Never publish a local build. To try the installer from a
+local build, assemble the site and serve it on localhost (Web Serial works
+there):
+
+```bash
+python3 ../cyd-web-installer/tools/make_manifests.py --out _site
+```
+
+```bash
+python3 -m http.server -d _site 8000
+```
 
 ---
 
@@ -257,7 +296,7 @@ Debug levels: 0 = Off, 1 = Error, 2 = Warn, 3 = Info, 4 = Verbose.
 | Library                                                    | Version   | Purpose                          |
 |:-----------------------------------------------------------|:----------|:---------------------------------|
 | [bodmer/TFT_eSPI](https://github.com/Bodmer/TFT_eSPI)     | `^2.5.43` | ILI9341 display driver + touch   |
-| [fastled/FastLED](https://github.com/FastLED/FastLED)     | `^3.4.0`  | Colour maths, palettes, noise    |
+| [fastled/FastLED](https://github.com/FastLED/FastLED)     | `3.10.3`  | Colour maths, palettes, noise    |
 
 TFT_eSPI is configured entirely through `platformio.ini` `build_flags`; there is no checked-in `User_Setup.h`.
 

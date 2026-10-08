@@ -57,9 +57,19 @@ Touch calibration (landscape, rotation 1) is set per board via `#if defined(BOAR
 | Library                | Version   | Purpose                                  |
 |:-----------------------|:----------|:-----------------------------------------|
 | `bodmer/TFT_eSPI`      | `^2.5.43` | ILI9341/ST7796 display driver + touch    |
-| `fastled/FastLED`      | `^3.4.0`  | Color maths, palettes, noise             |
+| `fastled/FastLED`      | `3.10.3`  | Color maths, palettes, noise             |
 
 TFT_eSPI is configured entirely via `build_flags` — no `User_Setup.h` file needed.
+
+---
+
+## Web installer and releases
+
+- Release images come only from CI on a `v*` tag on `main` – never publish a local build.
+- Never put `firmware-merged.bin` in a manifest; it fills NVS with `0xFF`.
+- `PROJECT_NAME` and `partitions_custom.csv` are frozen once released.
+- No WiFi, so no Improv: the installer always offers Install. If WiFi is ever added, copy Improv in from `cyd-web-installer/copy-in`, never from `lib_deps`.
+- `espressif32@6.12.0` and `FastLED@3.10.3` are pinned – FastLED 3.10.6 breaks `memset` in `Effects.h`.
 
 ---
 

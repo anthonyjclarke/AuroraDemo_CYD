@@ -6,7 +6,36 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [Unreleased] — 0.7.0-dev
+
+A browser installer. Each `v*` tag on `main` now publishes a GitHub release and
+deploys an ESP Web Tools installer to GitHub Pages, for both boards.
+
+### Added
+- **Web installer** at <https://anthonyjclarke.github.io/AuroraDemo_CYD/>:
+  pick the 2.8″ or 4.0″ board and install over USB from Chrome or Edge. The
+  demo has no WiFi, so it has no Improv and the installer always offers
+  **Install**, never **Update**.
+- **Release workflow** (`.github/workflows/firmware.yml`), calling the shared
+  `cyd-web-installer` workflow. Every push builds both boards; a `v*` tag
+  publishes `*-firmware.bin`, `*-merged.bin` and `SHA256SUMS.txt`.
+- **Merged firmware image** – `tools/merge_bin.py` writes `firmware-merged.bin`
+  (a clean install at `0x0`) and `flash_parts.json` after every build.
+- Boot log names the running app partition (`Running from app0`).
+
+### Changed
+- Version moved from `VERSION_STRING` in `src/main.cpp` to `FIRMWARE_VERSION`
+  in `include/config.h`, with `PROJECT_NAME "AuroraDemo_CYD"` (the installer's
+  manifest name – never changes). The unused `VERSION_MAJOR/MINOR/PATCH` are
+  gone.
+- Platform pinned to `espressif32@6.12.0` (arduino-esp32 2.0.17); unpinned
+  now resolves to pioarduino 3.x.
+- FastLED pinned to `3.10.3`. 3.10.6 fails to build: `memset(leds, …)` in
+  `Effects.h` becomes ambiguous with `fl::memset`.
+- Partition table switched from `default.csv` to the standard CYD dual-OTA
+  `partitions_custom.csv` (two 1.75 MB app slots). The demo keeps no settings
+  or files, so nothing is lost, but a board flashed with an older build should
+  take the installer's erase.
 
 ---
 
