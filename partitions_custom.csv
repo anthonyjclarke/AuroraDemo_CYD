@@ -1,0 +1,16 @@
+# AuroraDemo_CYD - 4MB flash, standard CYD dual-OTA layout.
+#
+# Two 1.75MB app slots (OTA A/B) plus a 384KB data partition. The firmware
+# has no OTA and no filesystem today; the standard table is used so the web
+# installer's four-part manifest matches every CYD project. Frozen once
+# released - a change after that needs an erase.
+#
+# The `spiffs` subtype name is correct even when mounted as LittleFS.
+#
+# Name,     Type, SubType,  Offset,   Size,    Flags
+nvs,        data, nvs,      0x9000,   0x5000,
+otadata,    data, ota,      0xe000,   0x2000,
+app0,       app,  ota_0,    0x10000,  0x1C0000,
+app1,       app,  ota_1,    0x1D0000, 0x1C0000,
+spiffs,     data, spiffs,   0x390000, 0x60000,
+coredump,   data, coredump, 0x3F0000, 0x10000,
