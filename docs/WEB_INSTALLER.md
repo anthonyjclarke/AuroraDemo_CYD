@@ -26,6 +26,18 @@ apply (no Improv). The 4.0″ relies on CI alone.
 
 ---
 
+## Release v0.7.0 (09-10-2026)
+
+Release run 37895570983 published the GitHub release (firmware and merged
+images for both boards, plus `SHA256SUMS.txt`) and deployed Pages. The live
+page loads, `index.json` and both manifests say `0.7.0` with four parts, and
+every part is served from Pages. The same 2.8″ (`b0:cb:d8:da:ae:8c`) was
+installed from the live page in macOS Chrome. It was offered **Install**, as
+expected with no Improv, booted `v0.7.0` on `app0`, and ran patterns with no
+panic.
+
+---
+
 ## Tests owed
 
 Smoke-tested only. Run these on the next real work on this project, or before
