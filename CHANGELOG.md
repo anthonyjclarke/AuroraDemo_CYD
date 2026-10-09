@@ -6,10 +6,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — 0.7.0-dev
+## [0.7.0] 09-10-2026
 
 A browser installer. Each `v*` tag on `main` now publishes a GitHub release and
 deploys an ESP Web Tools installer to GitHub Pages, for both boards.
+Smoke-tested on a 2.8″: fresh install from the CI image, boots on `app0`.
 
 ### Added
 - **Web installer** at <https://anthonyjclarke.github.io/AuroraDemo_CYD/>:

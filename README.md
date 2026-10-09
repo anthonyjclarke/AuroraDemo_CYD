@@ -1,7 +1,7 @@
 # Aurora Demo — ESP32 CYD Edition
 
 <!-- Update version badge when FIRMWARE_VERSION changes in include/config.h -->
-![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-ESP32-green.svg)
 ![PlatformIO](https://img.shields.io/badge/PlatformIO-6.x-orange.svg)
 ![Board](https://img.shields.io/badge/CYD-2.8%22%20%7C%204.0%22-yellow.svg)
@@ -12,7 +12,7 @@ Procedurally animated visual effects running on the **ESP32 Cheap Yellow Display
 
 Twenty-nine effects rotate automatically every 20 seconds. Tap the screen at any time to skip to the next effect immediately.
 
-**Current version: 0.6.0** — see [CHANGELOG.md](CHANGELOG.md) for full history.
+**Current version: 0.7.0** — see [CHANGELOG.md](CHANGELOG.md) for full history.
 
 Repository: [github.com/anthonyjclarke/AuroraDemo_CYD](https://github.com/anthonyjclarke/AuroraDemo_CYD)
 

@@ -11,7 +11,7 @@ ESP32-based visual effects demo running 29 procedurally-animated patterns on the
 | `esp32-cyd-28`    | ESP32-2432S028R    | ILI9341 | 320×240 | 160×120 | 2×    | ~96 KB       |
 | `esp32-cyd-40`    | ESP32-32E          | ST7796S | 480×320 | 120×80  | 4×    | ~48 KB       |
 
-- **Version**: 0.6.0 (`FIRMWARE_VERSION` in `include/config.h`)
+- **Version**: 0.7.0 (`FIRMWARE_VERSION` in `include/config.h`)
 - **Active patterns**: 29, rotate every 20 s (or on touch)
 - **Origins**: Jason Coon / PixelMatix Aurora (2014) → mrfaptastic ESP32-HUB75 port → Anthony Clarke CYD port (2026)
 
