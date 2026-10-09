@@ -46,4 +46,9 @@ the next release, and tick them off with date and board MAC.
 - [ ] Case 1 – fresh install, erased, on each remaining board (4.0″)
 - [ ] Case 2 – Update on a provisioned board (settings kept) – N/A: no Improv, so Update is never offered
 - [ ] Case 3 – Update from `app1` (only if the project has OTA) – N/A: no OTA
-- [ ] Case 4 – wrong board image, then reinstall (multi-env only)
+- [x] Case 4 – wrong board image, then reinstall (multi-env only) – Pass
+  09-10-2026, 2.8″ `b0:cb:d8:da:ae:8c`. The live v0.7.0 4.0″ parts were
+  written at the installer's four offsets with no erase. The board booted,
+  reported a 4.0″ on `app0`, ran patterns and didn't crash. Writing the 2.8″
+  parts back restored it on `app0`. Checked over serial; the screen wasn't
+  inspected (a dark screen is expected – backlight GPIO 27 vs 21).
