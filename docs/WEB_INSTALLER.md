@@ -22,7 +22,7 @@ manifests). The 2.8″ was erased with `pio run -t erase`, then installed from
 the CI preview (`0.7.0-dev`) in macOS Chrome with erase. It booted to the demo
 and logged `Running from app0`. Patterns rotated, and a 30 s serial capture
 showed no panic or watchdog reset. The WiFi step and the Connect check don't
-apply (no Improv). The 4.0″ relies on CI alone.
+apply (no Improv). The 4.0″ was covered later by case 1 below.
 
 ---
 
@@ -40,12 +40,16 @@ panic.
 
 ## Tests owed
 
-Smoke-tested only. Run these on the next real work on this project, or before
-the next release, and tick them off with date and board MAC.
+All cleared 09-10-2026. Re-run them when RUNBOOK 5b says so (partitions,
+platform, board envs or loop timing change).
 
-- [ ] Case 1 – fresh install, erased, on each remaining board (4.0″)
-- [ ] Case 2 – Update on a provisioned board (settings kept) – N/A: no Improv, so Update is never offered
-- [ ] Case 3 – Update from `app1` (only if the project has OTA) – N/A: no OTA
+- [x] Case 1 – fresh install, erased, on each remaining board – Pass
+  09-10-2026, 4.0″ `a4:f0:0f:68:95:5c`. Installed from the live page in
+  macOS Chrome with erase (full chip). The screen lit and patterns ran; it
+  booted v0.7.0 on `app0` with no panic.
+- [x] Case 2 – Update on a provisioned board – N/A: no Improv, so Update is
+  never offered, and there are no settings to keep
+- [x] Case 3 – Update from `app1` – N/A: no OTA
 - [x] Case 4 – wrong board image, then reinstall (multi-env only) – Pass
   09-10-2026, 2.8″ `b0:cb:d8:da:ae:8c`. The live v0.7.0 4.0″ parts were
   written at the installer's four offsets with no erase. The board booted,
