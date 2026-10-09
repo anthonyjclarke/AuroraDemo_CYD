@@ -5,7 +5,7 @@
  *  which accepts this #define form. #define rather than constexpr because the
  *  boot banner pastes FIRMWARE_VERSION into a string literal.
  *  A release tag must equal "v" + FIRMWARE_VERSION, with no -dev suffix.    */
-#define FIRMWARE_VERSION "0.7.0"
+#define FIRMWARE_VERSION "0.8.0-dev"
 #define PROJECT_NAME     "AuroraDemo_CYD"  // frozen: installer manifest name
 
 // "Based on" credit on the installer page

@@ -6,6 +6,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased] — 0.8.0-dev
+
+---
+
 ## [0.7.0] 09-10-2026
 
 A browser installer. Each `v*` tag on `main` now publishes a GitHub release and
