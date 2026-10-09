@@ -13,13 +13,16 @@ installer can't identify a running board and always offers **Install**, never
 
 ## Smoke test (RUNBOOK 5a)
 
-| Date | Board | MAC | Result |
-|:-----|:------|:----|:-------|
-| –    | –     | –   | Pending |
+| Date       | Board          | MAC                 | Result |
+|:-----------|:---------------|:--------------------|:-------|
+| 09-10-2026 | CYD 2.8″ S028R | `b0:cb:d8:da:ae:8c` | Pass   |
 
-Applicable steps: CI green for both envs; erase the board, fresh install from
-the CI preview with erase, boots to the demo, logs `Running from app0`, no
-crash. The WiFi step and the Connect check don't apply (no Improv).
+CI run 37894402547 was green for both envs (FastLED 3.10.3, four-part
+manifests). The 2.8″ was erased with `pio run -t erase`, then installed from
+the CI preview (`0.7.0-dev`) in macOS Chrome with erase. It booted to the demo
+and logged `Running from app0`. Patterns rotated, and a 30 s serial capture
+showed no panic or watchdog reset. The WiFi step and the Connect check don't
+apply (no Improv). The 4.0″ relies on CI alone.
 
 ---
 
@@ -28,7 +31,7 @@ crash. The WiFi step and the Connect check don't apply (no Improv).
 Smoke-tested only. Run these on the next real work on this project, or before
 the next release, and tick them off with date and board MAC.
 
-- [ ] Case 1 – fresh install, erased, on each remaining board
+- [ ] Case 1 – fresh install, erased, on each remaining board (4.0″)
 - [ ] Case 2 – Update on a provisioned board (settings kept) – N/A: no Improv, so Update is never offered
 - [ ] Case 3 – Update from `app1` (only if the project has OTA) – N/A: no OTA
 - [ ] Case 4 – wrong board image, then reinstall (multi-env only)
